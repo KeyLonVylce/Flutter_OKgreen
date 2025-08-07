@@ -1,22 +1,6 @@
 import 'package:flutter/material.dart';
 import 'register.dart'; // Pastikan file register.dart ada
 
-void main() => runApp(MyApp());
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        fontFamily: 'Roboto',
-      ),
-      home: WaveLoginScreen(),
-    );
-  }
-}
-
 class WaveLoginScreen extends StatefulWidget {
   @override
   _WaveLoginScreenState createState() => _WaveLoginScreenState();
@@ -40,20 +24,20 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
 
   String? _validateLogin(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Username or email is required';
+      return 'Username atau email wajib diisi';
     }
     if (value.length < 3) {
-      return 'Username must be at least 3 characters';
+      return 'Username minimal 3 karakter';
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Password is required';
+      return 'Password wajib diisi';
     }
     if (value.length < 6) {
-      return 'Password must be at least 6 characters';
+      return 'Password minimal 6 karakter';
     }
     return null;
   }
@@ -64,20 +48,22 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
         _isLoading = true;
       });
       
-      // Simulate API call
+      // Simulasi proses login
       await Future.delayed(Duration(seconds: 2));
       
       setState(() {
         _isLoading = false;
       });
       
-      // Show success message
+      // Tampilkan pesan sukses
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Login successful!'),
+          content: Text('Login berhasil!'),
           backgroundColor: Colors.green,
         ),
       );
+
+      // TODO: Navigasi ke halaman berikutnya
     }
   }
 
@@ -86,8 +72,8 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Forgot Password'),
-          content: Text('Password reset functionality will be implemented here.'),
+          title: Text('Lupa Password'),
+          content: Text('Fitur reset password akan diimplementasikan di sini.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -141,7 +127,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                       Column(
                         children: [
                           Text(
-                            'Welcome Back!',
+                            'Selamat Datang!',
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
@@ -150,7 +136,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                           ),
                           SizedBox(height: 8),
                           Text(
-                            'Sign in to continue to your account',
+                            'Silakan login untuk melanjutkan',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey[600],
@@ -187,8 +173,8 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                                 controller: _loginController,
                                 validator: _validateLogin,
                                 decoration: InputDecoration(
-                                  labelText: 'Username or Email',
-                                  hintText: 'Enter your username or email',
+                                  labelText: 'Username atau Email',
+                                  hintText: 'Masukkan username atau email',
                                   prefixIcon: Icon(Icons.person_outline),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -212,7 +198,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                                 validator: _validatePassword,
                                 decoration: InputDecoration(
                                   labelText: 'Password',
-                                  hintText: 'Enter your password',
+                                  hintText: 'Masukkan password',
                                   prefixIcon: Icon(Icons.lock_outline),
                                   suffixIcon: IconButton(
                                     icon: Icon(
@@ -257,7 +243,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                                         activeColor: Color(0xFF6D8D6F),
                                       ),
                                       Text(
-                                        'Remember me',
+                                        'Ingat saya',
                                         style: TextStyle(
                                           fontSize: 14,
                                           color: Colors.grey[600],
@@ -268,7 +254,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                                   GestureDetector(
                                     onTap: _showForgotPasswordDialog,
                                     child: Text(
-                                      'Forgot Password?',
+                                      'Lupa Password?',
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: Color(0xFF6D8D6F),
@@ -306,7 +292,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                                           ),
                                         )
                                       : Text(
-                                          'Sign In',
+                                          'Login',
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w600,
@@ -328,7 +314,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
-                              'OR',
+                              'ATAU',
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 14,
@@ -347,7 +333,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "Don't have an account? ",
+                            "Belum punya akun? ",
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 14,
@@ -363,7 +349,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                               );
                             },
                             child: Text(
-                              'Sign Up',
+                              'Daftar di sini',
                               style: TextStyle(
                                 color: Color(0xFF6D8D6F),
                                 fontSize: 14,
