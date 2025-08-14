@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'register.dart'; // Pastikan file register.dart ada
+import 'package:okgreen/presentation/page/detail_toko/beranda_page.dart';
+import 'register.dart'; 
 
 void main() => runApp(MyApp());
 
@@ -72,11 +73,9 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
       });
       
       // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Login successful!'),
-          backgroundColor: Colors.green,
-        ),
+      Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => BerandaPage()),
       );
     }
   }

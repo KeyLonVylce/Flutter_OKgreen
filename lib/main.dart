@@ -1,6 +1,7 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
-import 'presentation/page/detail_toko/beranda_page.dart';
+import 'package:okgreen/presentation/page/auth/login.dart';
+
 
 void main() {
   runApp(MyApp());
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.green,
         fontFamily: 'Roboto',
       ),
-      home: BerandaPage(), // Langsung ke BerandaPage
+      home: WaveLoginScreen(), // Langsung ke BerandaPage
     );
   }
 }
