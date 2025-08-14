@@ -1,22 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:okgreen/core/constants/app_colors.dart';
+import 'package:okgreen/presentation/widget/top_wave.dart';
 import 'package:okgreen/presentation/page/detail_toko/beranda_page.dart';
-import 'register.dart'; 
-
-void main() => runApp(MyApp());
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        fontFamily: 'Roboto',
-      ),
-      home: WaveLoginScreen(),
-    );
-  }
-}
+import 'register.dart';
 
 class WaveLoginScreen extends StatefulWidget {
   @override
@@ -40,71 +26,45 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
   }
 
   String? _validateLogin(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Username or email is required';
-    }
-    if (value.length < 3) {
-      return 'Username must be at least 3 characters';
-    }
+    if (value == null || value.isEmpty) return 'Username or email is required';
+    if (value.length < 3) return 'Username must be at least 3 characters';
     return null;
   }
 
   String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Password is required';
-    }
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
+    if (value == null || value.isEmpty) return 'Password is required';
+    if (value.length < 6) return 'Password must be at least 6 characters';
     return null;
   }
 
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-      
-      // Simulate API call
+      setState(() => _isLoading = true);
       await Future.delayed(Duration(seconds: 2));
-      
-      setState(() {
-        _isLoading = false;
-      });
-      
-      // Show success message
-      Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => BerandaPage()),
-      );
+      setState(() => _isLoading = false);
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => BerandaPage()));
     }
   }
 
   void _showForgotPasswordDialog() {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Forgot Password'),
-          content: Text('Password reset functionality will be implemented here.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('OK'),
-            ),
-          ],
-        );
-      },
+      builder: (_) => AlertDialog(
+        title: Text('Forgot Password'),
+        content: Text('Password reset functionality will be implemented here.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text('OK')),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
     
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.background,
       body: SingleChildScrollView(
         child: SizedBox(
           height: screenHeight,
@@ -120,8 +80,8 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Color(0xFF6D8D6F),
-                        Color(0xFF5A7A5C),
+                        AppColors.primary,
+                        AppColors.primaryDark,
                       ],
                     ),
                   ),
@@ -144,7 +104,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: Colors.grey[800],
+                              color: AppColors.grey800,
                             ),
                           ),
                           SizedBox(height: 8),
@@ -152,7 +112,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                             'Sign in to continue to your account',
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.grey[600],
+                              color: AppColors.grey600,
                             ),
                           ),
                         ],
@@ -166,7 +126,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                         constraints: BoxConstraints(maxWidth: 400),
                         padding: EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.white,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
@@ -195,7 +155,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: BorderSide(
-                                      color: Color(0xFF6D8D6F),
+                                      color: AppColors.primary,
                                       width: 2,
                                     ),
                                   ),
@@ -219,11 +179,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                                           ? Icons.visibility_off
                                           : Icons.visibility,
                                     ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _isPasswordVisible = !_isPasswordVisible;
-                                      });
-                                    },
+                                    onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                                   ),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -231,7 +187,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: BorderSide(
-                                      color: Color(0xFF6D8D6F),
+                                      color: AppColors.primary,
                                       width: 2,
                                     ),
                                   ),
@@ -248,18 +204,14 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                                     children: [
                                       Checkbox(
                                         value: _rememberMe,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _rememberMe = value!;
-                                          });
-                                        },
-                                        activeColor: Color(0xFF6D8D6F),
+                                        onChanged: (value) => setState(() => _rememberMe = value!),
+                                        activeColor: AppColors.primary,
                                       ),
                                       Text(
                                         'Remember me',
                                         style: TextStyle(
                                           fontSize: 14,
-                                          color: Colors.grey[600],
+                                          color: AppColors.grey600,
                                         ),
                                       ),
                                     ],
@@ -270,7 +222,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                                       'Forgot Password?',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Color(0xFF6D8D6F),
+                                        color: AppColors.primary,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -286,8 +238,8 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                                 child: ElevatedButton(
                                   onPressed: _isLoading ? null : _handleLogin,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Color(0xFF6D8D6F),
-                                    foregroundColor: Colors.white,
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: AppColors.white,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(16),
@@ -299,9 +251,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                                           width: 20,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(
-                                              Colors.white,
-                                            ),
+                                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                                           ),
                                         )
                                       : Text(
@@ -323,19 +273,19 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                       // Divider
                       Row(
                         children: [
-                          Expanded(child: Divider(color: Colors.grey[300])),
+                          Expanded(child: Divider(color: AppColors.grey800)),
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
                               'OR',
                               style: TextStyle(
-                                color: Colors.grey[600],
+                                color: AppColors.grey600,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
-                          Expanded(child: Divider(color: Colors.grey[300])),
+                          Expanded(child: Divider(color: AppColors.grey800)),
                         ],
                       ),
 
@@ -348,23 +298,18 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                           Text(
                             "Don't have an account? ",
                             style: TextStyle(
-                              color: Colors.grey[600],
+                              color: AppColors.grey600,
                               fontSize: 14,
                             ),
                           ),
                           GestureDetector(
                             onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => RegisterScreen(),
-                                ),
-                              );
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterScreen()));
                             },
                             child: Text(
                               'Sign Up',
                               style: TextStyle(
-                                color: Color(0xFF6D8D6F),
+                                color: AppColors.primary,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -382,38 +327,4 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
       ),
     );
   }
-}
-
-/// Custom clipper for wave effect
-class TopWaveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    var path = Path();
-    path.lineTo(0, size.height - 60);
-
-    var firstControlPoint = Offset(size.width / 4, size.height);
-    var firstEndPoint = Offset(size.width / 2, size.height - 40);
-    path.quadraticBezierTo(
-      firstControlPoint.dx,
-      firstControlPoint.dy,
-      firstEndPoint.dx,
-      firstEndPoint.dy,
-    );
-
-    var secondControlPoint = Offset(size.width * 3 / 4, size.height - 80);
-    var secondEndPoint = Offset(size.width, size.height - 30);
-    path.quadraticBezierTo(
-      secondControlPoint.dx,
-      secondControlPoint.dy,
-      secondEndPoint.dx,
-      secondEndPoint.dy,
-    );
-
-    path.lineTo(size.width, 0);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

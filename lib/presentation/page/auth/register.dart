@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:okgreen/core/constants/app_colors.dart';
+import 'package:okgreen/presentation/widget/top_wave.dart';
 
 class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
   @override
-  _RegisterScreenState createState() => _RegisterScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
@@ -10,10 +14,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  
+
   bool _isPasswordVisible = false;
   bool _isLoading = false;
-  
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -22,54 +26,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  String? _validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Email is required';
-    }
-    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-      return 'Please enter a valid email';
-    }
-    return null;
-  }
-
-  String? _validateUsername(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Username is required';
-    }
-    if (value.length < 3) {
-      return 'Username must be at least 3 characters';
-    }
-    return null;
-  }
-
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Password is required';
-    }
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
-    return null;
-  }
-
   Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-      
-      // Simulate API call
-      await Future.delayed(Duration(seconds: 2));
-      
-      setState(() {
-        _isLoading = false;
-      });
-      
-      // Show success message
+      setState(() => _isLoading = true);
+      await Future.delayed(const Duration(seconds: 2));
+      setState(() => _isLoading = false);
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Account created successfully!'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.primary,
         ),
       );
     }
@@ -78,156 +44,164 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-    
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.background,
       body: SingleChildScrollView(
         child: SizedBox(
           height: screenHeight,
           child: Stack(
             children: [
-              // Wave background
+              // Top Wave background
               ClipPath(
                 clipper: TopWaveClipper(),
                 child: Container(
-                  height: screenHeight * 0.35,
-                  decoration: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFF6D8D6F),
-                      Color(0xFF5A7A5C),
-                    ],
-                  ).createShader(Rect.fromLTWH(0, 0, screenWidth, screenHeight * 0.35)) != null
-                      ? BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Color(0xFF6D8D6F),
-                              Color(0xFF5A7A5C),
-                            ],
-                          ),
-                        )
-                      : BoxDecoration(color: Color(0xFF6D8D6F)),
+                  height: screenHeight * 0.3,
+                  color: AppColors.primary,
                 ),
               ),
 
-              // Register content
               SafeArea(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Column(
                     children: [
                       SizedBox(height: screenHeight * 0.15),
-                      
+
                       // Header
                       Column(
                         children: [
                           Text(
                             'Create Account',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: Colors.grey[800],
+                              color: AppColors.grey800,
                             ),
                           ),
-                          SizedBox(height: 8),
-                          Text(
+                          const SizedBox(height: 8),
+                          const Text(
                             'Please fill in the form to continue',
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.grey[600],
+                              color: AppColors.grey600,
                             ),
                           ),
                         ],
                       ),
-                      
-                      SizedBox(height: 40),
+                      const SizedBox(height: 40),
 
-                      // Register Form
+                      // Form
                       Container(
                         width: double.infinity,
-                        constraints: BoxConstraints(maxWidth: 400),
-                        padding: EdgeInsets.all(24),
+                        constraints: const BoxConstraints(maxWidth: 400),
+                        padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.white,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.1),
                               blurRadius: 20,
-                              offset: Offset(0, 8),
+                              offset: const Offset(0, 8),
                             ),
                           ],
                         ),
                         child: Form(
                           key: _formKey,
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // Email Field
+                              // Email
                               TextFormField(
                                 controller: _emailController,
                                 keyboardType: TextInputType.emailAddress,
-                                validator: _validateEmail,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Email is required';
+                                  }
+                                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                      .hasMatch(value)) {
+                                    return 'Please enter a valid email';
+                                  }
+                                  return null;
+                                },
                                 decoration: InputDecoration(
                                   labelText: 'Email Address',
+                                  labelStyle: const TextStyle(color: AppColors.grey800),
                                   hintText: 'Enter your email',
-                                  prefixIcon: Icon(Icons.email_outlined),
+                                  hintStyle: const TextStyle(color: AppColors.grey600),
+                                  prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: Color(0xFF6D8D6F),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.primary,
                                       width: 2,
                                     ),
                                   ),
                                 ),
                               ),
-                              
-                              SizedBox(height: 20),
-                              
-                              // Username Field
+                              const SizedBox(height: 20),
+
+                              // Username
                               TextFormField(
                                 controller: _usernameController,
-                                validator: _validateUsername,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Username is required';
+                                  }
+                                  if (value.length < 3) {
+                                    return 'Username must be at least 3 characters';
+                                  }
+                                  return null;
+                                },
                                 decoration: InputDecoration(
                                   labelText: 'Username',
+                                  labelStyle: const TextStyle(color: AppColors.grey800),
                                   hintText: 'Choose a username',
-                                  prefixIcon: Icon(Icons.person_outline),
+                                  hintStyle: const TextStyle(color: AppColors.grey600),
+                                  prefixIcon: const Icon(Icons.person_outline, color: AppColors.primary),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: Color(0xFF6D8D6F),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.primary,
                                       width: 2,
                                     ),
                                   ),
                                 ),
                               ),
-                              
-                              SizedBox(height: 20),
-                              
-                              // Password Field
+                              const SizedBox(height: 20),
+
+                              // Password
                               TextFormField(
                                 controller: _passwordController,
                                 obscureText: !_isPasswordVisible,
-                                validator: _validatePassword,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Password is required';
+                                  }
+                                  if (value.length < 6) {
+                                    return 'Password must be at least 6 characters';
+                                  }
+                                  return null;
+                                },
                                 decoration: InputDecoration(
                                   labelText: 'Password',
+                                  labelStyle: const TextStyle(color: AppColors.grey800),
                                   hintText: 'Create a password',
-                                  prefixIcon: Icon(Icons.lock_outline),
+                                  hintStyle: const TextStyle(color: AppColors.grey600),
+                                  prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary),
                                   suffixIcon: IconButton(
                                     icon: Icon(
                                       _isPasswordVisible
                                           ? Icons.visibility_off
                                           : Icons.visibility,
+                                      color: AppColors.grey600,
                                     ),
                                     onPressed: () {
                                       setState(() {
@@ -240,8 +214,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: Color(0xFF6D8D6F),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.primary,
                                       width: 2,
                                     ),
                                   ),
@@ -251,36 +225,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                       ),
-
-                      SizedBox(height: 32),
+                      const SizedBox(height: 32),
 
                       // Register Button
                       Container(
                         width: double.infinity,
-                        constraints: BoxConstraints(maxWidth: 400),
+                        constraints: const BoxConstraints(maxWidth: 400),
                         height: 56,
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _handleRegister,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF6D8D6F),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: AppColors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
                           child: _isLoading
-                              ? SizedBox(
+                              ? const SizedBox(
                                   height: 20,
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
+                                      AppColors.white,
                                     ),
                                   ),
                                 )
-                              : Text(
+                              : const Text(
                                   'Create Account',
                                   style: TextStyle(
                                     fontSize: 16,
@@ -289,17 +261,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                         ),
                       ),
-
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
                       // Login Link
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
+                          const Text(
                             'Already have an account? ',
                             style: TextStyle(
-                              color: Colors.grey[600],
+                              color: AppColors.grey600,
                               fontSize: 14,
                             ),
                           ),
@@ -307,10 +278,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             onTap: () {
                               Navigator.pop(context);
                             },
-                            child: Text(
+                            child: const Text(
                               'Sign In',
                               style: TextStyle(
-                                color: Color(0xFF6D8D6F),
+                                color: AppColors.primary,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -328,38 +299,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
-}
-
-/// Custom clipper for wave effect
-class TopWaveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    var path = Path();
-    path.lineTo(0, size.height - 60);
-
-    var firstControlPoint = Offset(size.width / 4, size.height);
-    var firstEndPoint = Offset(size.width / 2, size.height - 40);
-    path.quadraticBezierTo(
-      firstControlPoint.dx,
-      firstControlPoint.dy,
-      firstEndPoint.dx,
-      firstEndPoint.dy,
-    );
-
-    var secondControlPoint = Offset(size.width * 3 / 4, size.height - 80);
-    var secondEndPoint = Offset(size.width, size.height - 30);
-    path.quadraticBezierTo(
-      secondControlPoint.dx,
-      secondControlPoint.dy,
-      secondEndPoint.dx,
-      secondEndPoint.dy,
-    );
-
-    path.lineTo(size.width, 0);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

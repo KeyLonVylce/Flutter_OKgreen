@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.green,
         fontFamily: 'Roboto',
       ),
-      home: WaveLoginScreen(), // Langsung ke BerandaPage
+      home: WaveLoginScreen(), 
     );
   }
 }
