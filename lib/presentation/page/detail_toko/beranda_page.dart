@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:okgreen/core/constants/app_colors.dart';
 import 'package:okgreen/core/constants/app_text_styles.dart';
+import 'package:okgreen/presentation/page/detail_toko/beli_barang_page.dart';
+import 'package:okgreen/presentation/page/detail_toko/edukasi_page.dart';
+import 'package:okgreen/presentation/page/detail_toko/jual_barang_page.dart';
 import 'package:okgreen/presentation/widget/EcoProductCard.dart';
 import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/product_card.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
+
 
 
 class BerandaPage extends StatefulWidget {
@@ -21,8 +25,30 @@ class _BerandaPageState extends State<BerandaPage> {
     setState(() {
       _currentIndex = index;
     });
-    // TODO: Implement navigation to other pages
-    print('Navigating to index: $index');
+    // Navigate to other pages based on index
+    switch (index) {
+      case 0:
+        // Already on beranda page
+        break;
+      case 1:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => JualBarangPage()),
+        );
+        break;
+      case 2:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => BeliBarangPage()),
+        );
+        break;
+      case 3:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => EdukasiPage()),
+        );
+        break;
+    }
   }
 
   @override
