@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:okgreen/core/constants/app_colors.dart';
+import 'package:okgreen/core/constants/app_text_styles.dart';
+import 'package:okgreen/core/constants/app_dimensions.dart';
+import 'package:okgreen/core/constants/app_decorations.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
 import 'package:okgreen/presentation/page/detail_toko/beranda_page.dart';
 import 'register.dart';
@@ -74,68 +77,36 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
               ClipPath(
                 clipper: TopWaveClipper(),
                 child: Container(
-                  height: screenHeight * 0.35,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.primary,
-                        AppColors.primaryDark,
-                      ],
-                    ),
-                  ),
+                  height: screenHeight * AppDimensions.waveHeightLogin,
+                  decoration: AppDecorations.waveGradient,
                 ),
               ),
 
               // Login content
               SafeArea(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.0),
+                  padding: EdgeInsets.symmetric(horizontal: AppDimensions.paddingMedium),
                   child: Column(
                     children: [
-                      SizedBox(height: screenHeight * 0.15),
+                      SizedBox(height: screenHeight * AppDimensions.headerTopSpacing),
                       
                       // Header
                       Column(
                         children: [
-                          Text(
-                            'Welcome Back!',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.grey800,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Sign in to continue to your account',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: AppColors.grey600,
-                            ),
-                          ),
+                          Text('Welcome Back!', style: AppTextStyles.pageTitle),
+                          SizedBox(height: AppDimensions.spacingXS),
+                          Text('Sign in to continue to your account', style: AppTextStyles.pageSubtitle),
                         ],
                       ),
                       
-                      SizedBox(height: 40),
+                      SizedBox(height: AppDimensions.spacingXXL),
 
                       // Login Form
                       Container(
                         width: double.infinity,
-                        constraints: BoxConstraints(maxWidth: 400),
-                        padding: EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 20,
-                              offset: Offset(0, 8),
-                            ),
-                          ],
-                        ),
+                        constraints: BoxConstraints(maxWidth: AppDimensions.formMaxWidth),
+                        padding: EdgeInsets.all(AppDimensions.paddingMedium),
+                        decoration: AppDecorations.formContainer,
                         child: Form(
                           key: _formKey,
                           child: Column(
@@ -145,31 +116,21 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                               TextFormField(
                                 controller: _loginController,
                                 validator: _validateLogin,
-                                decoration: InputDecoration(
+                                decoration: AppInputDecorations.baseInputDecoration(
                                   labelText: 'Username or Email',
                                   hintText: 'Enter your username or email',
                                   prefixIcon: Icon(Icons.person_outline),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: AppColors.primary,
-                                      width: 2,
-                                    ),
-                                  ),
                                 ),
                               ),
                               
-                              SizedBox(height: 20),
+                              SizedBox(height: AppDimensions.spacingMedium),
                               
                               // Password Field
                               TextFormField(
                                 controller: _passwordController,
                                 obscureText: !_isPasswordVisible,
                                 validator: _validatePassword,
-                                decoration: InputDecoration(
+                                decoration: AppInputDecorations.baseInputDecoration(
                                   labelText: 'Password',
                                   hintText: 'Enter your password',
                                   prefixIcon: Icon(Icons.lock_outline),
@@ -181,20 +142,10 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                                     ),
                                     onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                                   ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: AppColors.primary,
-                                      width: 2,
-                                    ),
-                                  ),
                                 ),
                               ),
                               
-                              SizedBox(height: 16),
+                              SizedBox(height: AppDimensions.spacingSmall),
                               
                               // Remember Me & Forgot Password
                               Row(
@@ -207,60 +158,34 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                                         onChanged: (value) => setState(() => _rememberMe = value!),
                                         activeColor: AppColors.primary,
                                       ),
-                                      Text(
-                                        'Remember me',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: AppColors.grey600,
-                                        ),
-                                      ),
+                                      Text('Remember me', style: AppTextStyles.rememberMeText),
                                     ],
                                   ),
                                   GestureDetector(
                                     onTap: _showForgotPasswordDialog,
-                                    child: Text(
-                                      'Forgot Password?',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
+                                    child: Text('Forgot Password?', style: AppTextStyles.forgotPasswordText),
                                   ),
                                 ],
                               ),
                               
-                              SizedBox(height: 24),
+                              SizedBox(height: AppDimensions.spacingLarge),
                               
                               // Login Button
                               SizedBox(
-                                height: 56,
+                                height: AppDimensions.buttonHeight,
                                 child: ElevatedButton(
                                   onPressed: _isLoading ? null : _handleLogin,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    foregroundColor: AppColors.white,
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                  ),
+                                  style: AppButtonStyles.primaryButton,
                                   child: _isLoading
                                       ? SizedBox(
-                                          height: 20,
-                                          width: 20,
+                                          height: AppDimensions.loadingSize,
+                                          width: AppDimensions.loadingSize,
                                           child: CircularProgressIndicator(
-                                            strokeWidth: 2,
+                                            strokeWidth: AppDimensions.loadingStroke,
                                             valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                                           ),
                                         )
-                                      : Text(
-                                          'Sign In',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
+                                      : Text('Sign In', style: AppTextStyles.buttonText),
                                 ),
                               ),
                             ],
@@ -268,52 +193,32 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                         ),
                       ),
 
-                      SizedBox(height: 32),
+                      SizedBox(height: AppDimensions.spacingXL),
 
                       // Divider
                       Row(
                         children: [
                           Expanded(child: Divider(color: AppColors.grey800)),
                           Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              'OR',
-                              style: TextStyle(
-                                color: AppColors.grey600,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+                            padding: EdgeInsets.symmetric(horizontal: AppDimensions.spacingSmall),
+                            child: Text('OR', style: AppTextStyles.dividerText),
                           ),
                           Expanded(child: Divider(color: AppColors.grey800)),
                         ],
                       ),
 
-                      SizedBox(height: 24),
+                      SizedBox(height: AppDimensions.spacingLarge),
 
                       // Sign Up Link
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            "Don't have an account? ",
-                            style: TextStyle(
-                              color: AppColors.grey600,
-                              fontSize: 14,
-                            ),
-                          ),
+                          Text("Don't have an account? ", style: AppTextStyles.linkPromptText),
                           GestureDetector(
                             onTap: () {
                               Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterScreen()));
                             },
-                            child: Text(
-                              'Sign Up',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                            child: Text('Sign Up', style: AppTextStyles.linkText),
                           ),
                         ],
                       ),

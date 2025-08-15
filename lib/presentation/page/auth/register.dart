@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:okgreen/core/constants/app_colors.dart';
+import 'package:okgreen/core/constants/app_text_styles.dart';
+import 'package:okgreen/core/constants/app_dimensions.dart';
+import 'package:okgreen/core/constants/app_decorations.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -56,57 +59,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ClipPath(
                 clipper: TopWaveClipper(),
                 child: Container(
-                  height: screenHeight * 0.3,
+                  height: screenHeight * AppDimensions.waveHeightRegister,
                   color: AppColors.primary,
                 ),
               ),
 
               SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMedium),
                   child: Column(
                     children: [
-                      SizedBox(height: screenHeight * 0.15),
+                      SizedBox(height: screenHeight * AppDimensions.headerTopSpacing),
 
                       // Header
                       Column(
                         children: [
-                          Text(
-                            'Create Account',
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.grey800,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Please fill in the form to continue',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: AppColors.grey600,
-                            ),
-                          ),
+                          Text('Create Account', style: AppTextStyles.pageTitle),
+                          const SizedBox(height: AppDimensions.spacingXS),
+                          const Text('Please fill in the form to continue', style: AppTextStyles.pageSubtitle),
                         ],
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: AppDimensions.spacingXXL),
 
                       // Form
                       Container(
                         width: double.infinity,
-                        constraints: const BoxConstraints(maxWidth: 400),
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
+                        constraints: const BoxConstraints(maxWidth: AppDimensions.formMaxWidth),
+                        padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+                        decoration: AppDecorations.formContainer,
                         child: Form(
                           key: _formKey,
                           child: Column(
@@ -125,25 +105,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   }
                                   return null;
                                 },
-                                decoration: InputDecoration(
+                                decoration: AppInputDecorations.baseInputDecoration(
                                   labelText: 'Email Address',
-                                  labelStyle: const TextStyle(color: AppColors.grey800),
                                   hintText: 'Enter your email',
-                                  hintStyle: const TextStyle(color: AppColors.grey600),
                                   prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color: AppColors.primary,
-                                      width: 2,
-                                    ),
-                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: AppDimensions.spacingMedium),
 
                               // Username
                               TextFormField(
@@ -157,25 +125,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   }
                                   return null;
                                 },
-                                decoration: InputDecoration(
+                                decoration: AppInputDecorations.baseInputDecoration(
                                   labelText: 'Username',
-                                  labelStyle: const TextStyle(color: AppColors.grey800),
                                   hintText: 'Choose a username',
-                                  hintStyle: const TextStyle(color: AppColors.grey600),
                                   prefixIcon: const Icon(Icons.person_outline, color: AppColors.primary),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color: AppColors.primary,
-                                      width: 2,
-                                    ),
-                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: AppDimensions.spacingMedium),
 
                               // Password
                               TextFormField(
@@ -190,11 +146,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   }
                                   return null;
                                 },
-                                decoration: InputDecoration(
+                                decoration: AppInputDecorations.baseInputDecoration(
                                   labelText: 'Password',
-                                  labelStyle: const TextStyle(color: AppColors.grey800),
                                   hintText: 'Create a password',
-                                  hintStyle: const TextStyle(color: AppColors.grey600),
                                   prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary),
                                   suffixIcon: IconButton(
                                     icon: Icon(
@@ -209,83 +163,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       });
                                     },
                                   ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color: AppColors.primary,
-                                      width: 2,
-                                    ),
-                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: AppDimensions.spacingXL),
 
                       // Register Button
                       Container(
                         width: double.infinity,
-                        constraints: const BoxConstraints(maxWidth: 400),
-                        height: 56,
+                        constraints: const BoxConstraints(maxWidth: AppDimensions.formMaxWidth),
+                        height: AppDimensions.buttonHeight,
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _handleRegister,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
+                          style: AppButtonStyles.primaryButton,
                           child: _isLoading
                               ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
+                                  height: AppDimensions.loadingSize,
+                                  width: AppDimensions.loadingSize,
                                   child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+                                    strokeWidth: AppDimensions.loadingStroke,
                                     valueColor: AlwaysStoppedAnimation<Color>(
                                       AppColors.white,
                                     ),
                                   ),
                                 )
-                              : const Text(
-                                  'Create Account',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
+                              : const Text('Create Account', style: AppTextStyles.buttonText),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: AppDimensions.spacingLarge),
 
                       // Login Link
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
-                            'Already have an account? ',
-                            style: TextStyle(
-                              color: AppColors.grey600,
-                              fontSize: 14,
-                            ),
-                          ),
+                          const Text('Already have an account? ', style: AppTextStyles.linkPromptText),
                           GestureDetector(
                             onTap: () {
                               Navigator.pop(context);
                             },
-                            child: const Text(
-                              'Sign In',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                            child: const Text('Sign In', style: AppTextStyles.linkText),
                           ),
                         ],
                       ),
