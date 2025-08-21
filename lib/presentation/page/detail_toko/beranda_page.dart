@@ -171,27 +171,9 @@ class _BerandaPageState extends State<BerandaPage> {
                           ),
                           
                           const SizedBox(height: 30),
-                          
                           // Product Cards
                           Row(
                             children: [
-                              Expanded(
-                                child: ProductCard(
-                                  icon: Icons.local_drink,
-                                  iconColor: AppColors.red,
-                                  description: 'Lorem ipsum dolor sit amet,\nconsectetur',
-                                  price: '\$17.00',
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: ProductCard(
-                                  icon: Icons.shopping_bag_outlined,
-                                  iconColor: AppColors.blue,
-                                  description: 'Lorem ipsum dolor sit amet,\nconsectetur',
-                                  price: '\$17.00',
-                                ),
-                              ),
                             ],
                           ),
                           const SizedBox(height: 100),
