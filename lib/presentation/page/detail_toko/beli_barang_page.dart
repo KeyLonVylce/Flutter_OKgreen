@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:okgreen/core/constants/app_colors.dart';
 import 'package:okgreen/presentation/page/detail_toko/beranda_page.dart';
-import 'package:okgreen/presentation/page/detail_toko/edukasi_page.dart';
+
 import 'package:okgreen/presentation/page/detail_toko/jual_barang_page.dart';
 import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
@@ -15,9 +15,6 @@ class BeliBarangPage extends StatefulWidget {
 
 class _BeliBarangPageState extends State<BeliBarangPage> {
   int currentIndex = 2; // Beli Barang tab
-  String selectedCategory = 'All';
-  
-  final List<String> categories = ['All', 'Electronics', 'Fashion', 'Books', 'Sports'];
 
   void _onTabTapped(int index) {
     setState(() {
@@ -40,12 +37,7 @@ class _BeliBarangPageState extends State<BeliBarangPage> {
       case 2:
         // Already on beli barang page
         break;
-      case 3:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => EdukasiPage()),
-        );
-        break;
+
     }
   }
 
@@ -77,7 +69,7 @@ class _BeliBarangPageState extends State<BeliBarangPage> {
           SafeArea(
             child: Column(
               children: [
-                // Header
+                // Header with greeting
                 Padding(
                   padding: const EdgeInsets.all(20),
                   child: Row(
@@ -112,7 +104,7 @@ class _BeliBarangPageState extends State<BeliBarangPage> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
-                              Icons.search,
+                              Icons.notifications,
                               color: Colors.white,
                               size: 24,
                             ),
@@ -124,36 +116,10 @@ class _BeliBarangPageState extends State<BeliBarangPage> {
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Stack(
-                              children: [
-                                const Icon(
-                                  Icons.shopping_cart,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
-                                Positioned(
-                                  right: -2,
-                                  top: -2,
-                                  child: Container(
-                                    width: 16,
-                                    height: 16,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.red,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Center(
-                                      child: Text(
-                                        '3',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            child: const Icon(
+                              Icons.account_circle,
+                              color: Colors.white,
+                              size: 24,
                             ),
                           ),
                         ],
@@ -198,69 +164,11 @@ class _BeliBarangPageState extends State<BeliBarangPage> {
                           ),
                         ),
                       ),
-                      Icon(
-                        Icons.filter_list,
-                        color: Colors.grey,
-                        size: 20,
-                      ),
                     ],
                   ),
                 ),
                 
-                const SizedBox(height: 20),
-                
-                // Categories
-                Container(
-                  height: 50,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: categories.length,
-                    itemBuilder: (context, index) {
-                      final category = categories[index];
-                      final isSelected = selectedCategory == category;
-                      
-                      return Container(
-                        margin: const EdgeInsets.only(right: 12),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(25),
-                            onTap: () {
-                              setState(() {
-                                selectedCategory = category;
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: isSelected ? AppColors.primary : Colors.white,
-                                borderRadius: BorderRadius.circular(25),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 5,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                category,
-                                style: TextStyle(
-                                  color: isSelected ? Colors.white : Colors.black87,
-                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
                 
                 // Products grid
                 Expanded(
