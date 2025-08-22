@@ -37,12 +37,7 @@ class _BottomNavbarState extends State<BottomNavbar> {
       activeIcon: Icons.shopping_bag_rounded,
       label: 'Beli Barang',
     ),
-    NavItem(
-      index: 3,
-      inactiveIcon: Icons.school_outlined,
-      activeIcon: Icons.school_rounded,
-      label: 'Edukasi',
-    ),
+
   ];
 
   @override

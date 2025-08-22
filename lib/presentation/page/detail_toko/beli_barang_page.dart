@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:okgreen/core/constants/app_colors.dart';
 import 'package:okgreen/presentation/page/detail_toko/beranda_page.dart';
-
 import 'package:okgreen/presentation/page/detail_toko/jual_barang_page.dart';
 import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
+import 'package:okgreen/presentation/widget/checkout_widget.dart';
+import 'package:okgreen/presentation/widget/product_card.dart';
 
 class BeliBarangPage extends StatefulWidget {
   const BeliBarangPage({super.key});
@@ -15,6 +16,20 @@ class BeliBarangPage extends StatefulWidget {
 
 class _BeliBarangPageState extends State<BeliBarangPage> {
   int currentIndex = 2; // Beli Barang tab
+  List<Map<String, dynamic>> selectedProducts = [];
+  bool showCheckoutWidget = false;
+
+  // Products data
+  final List<Map<String, dynamic>> products = [
+    {'name': 'iPhone 12 Pro', 'price': '\$699', 'icon': Icons.phone_iphone, 'description': 'iPhone 12 Pro - TechStore', 'image': '📱'},
+    {'name': 'Nike Air Force', 'price': '\$85', 'icon': Icons.sports_soccer, 'description': 'Nike Air Force - ShoesHub', 'image': '👟'},
+    {'name': 'MacBook Air M1', 'price': '\$899', 'icon': Icons.laptop_mac, 'description': 'MacBook Air M1 - LaptopWorld', 'image': '💻'},
+    {'name': 'Samsung Galaxy', 'price': '\$549', 'icon': Icons.smartphone, 'description': 'Samsung Galaxy - PhoneShop', 'image': '📱'},
+    {'name': 'iPad Pro 11"', 'price': '\$749', 'icon': Icons.tablet_mac, 'description': 'iPad Pro 11" - TabletStore', 'image': '📲'},
+    {'name': 'AirPods Pro', 'price': '\$199', 'icon': Icons.headphones, 'description': 'AirPods Pro - AudioHub', 'image': '🎧'},
+    {'name': 'Dell Monitor', 'price': '\$299', 'icon': Icons.computer, 'description': 'Dell Monitor - TechGear', 'image': '🖥️'},
+    {'name': 'Gaming Chair', 'price': '\$159', 'icon': Icons.chair, 'description': 'Gaming Chair - FurnitureShop', 'image': '🪑'},
+  ];
 
   void _onTabTapped(int index) {
     setState(() {
@@ -37,8 +52,36 @@ class _BeliBarangPageState extends State<BeliBarangPage> {
       case 2:
         // Already on beli barang page
         break;
-
     }
+  }
+
+  void _toggleProductSelection(Map<String, dynamic> product) {
+    setState(() {
+      final existingIndex = selectedProducts.indexWhere(
+        (item) => item['name'] == product['name']
+      );
+      
+      if (existingIndex >= 0) {
+        // Product already selected, remove it
+        selectedProducts.removeAt(existingIndex);
+      } else {
+        // Product not selected, add it
+        selectedProducts.add(product);
+      }
+
+      // Show/hide checkout widget based on selection
+      showCheckoutWidget = selectedProducts.isNotEmpty;
+    });
+  }
+
+  bool _isProductSelected(Map<String, dynamic> product) {
+    return selectedProducts.any((item) => item['name'] == product['name']);
+  }
+
+  void _hideCheckoutWidget() {
+    setState(() {
+      showCheckoutWidget = false;
+    });
   }
 
   @override
@@ -116,10 +159,39 @@ class _BeliBarangPageState extends State<BeliBarangPage> {
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(
-                              Icons.account_circle,
-                              color: Colors.white,
-                              size: 24,
+                            child: Stack(
+                              children: [
+                                const Icon(
+                                  Icons.shopping_cart,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                                if (selectedProducts.isNotEmpty)
+                                  Positioned(
+                                    right: -2,
+                                    top: -2,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 16,
+                                        minHeight: 16,
+                                      ),
+                                      child: Text(
+                                        '${selectedProducts.length}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ],
@@ -177,9 +249,9 @@ class _BeliBarangPageState extends State<BeliBarangPage> {
                     child: GridView.builder(
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 0.8,
+                        crossAxisSpacing: 15,
+                        mainAxisSpacing: 15,
+                        childAspectRatio: 0.75, // Made cards taller
                       ),
                       itemCount: 8,
                       itemBuilder: (context, index) {
@@ -191,6 +263,13 @@ class _BeliBarangPageState extends State<BeliBarangPage> {
               ],
             ),
           ),
+
+          // Checkout Widget Overlay
+          if (showCheckoutWidget)
+            CheckoutWidget(
+              selectedProducts: selectedProducts,
+              onClose: _hideCheckoutWidget,
+            ),
         ],
       ),
       bottomNavigationBar: BottomNavbar(
@@ -201,133 +280,122 @@ class _BeliBarangPageState extends State<BeliBarangPage> {
   }
 
   Widget _buildProductCard(int index) {
-    final products = [
-      {'name': 'iPhone 12 Pro', 'price': '\$699', 'image': '📱', 'rating': '4.8', 'seller': 'TechStore'},
-      {'name': 'Nike Air Force', 'price': '\$85', 'image': '👟', 'rating': '4.5', 'seller': 'ShoesHub'},
-      {'name': 'MacBook Air M1', 'price': '\$899', 'image': '💻', 'rating': '4.9', 'seller': 'LaptopWorld'},
-      {'name': 'Samsung Galaxy', 'price': '\$549', 'image': '📱', 'rating': '4.6', 'seller': 'PhoneShop'},
-      {'name': 'iPad Pro 11"', 'price': '\$749', 'image': '📲', 'rating': '4.7', 'seller': 'TabletStore'},
-      {'name': 'AirPods Pro', 'price': '\$199', 'image': '🎧', 'rating': '4.8', 'seller': 'AudioHub'},
-      {'name': 'Dell Monitor', 'price': '\$299', 'image': '🖥️', 'rating': '4.4', 'seller': 'TechGear'},
-      {'name': 'Gaming Chair', 'price': '\$159', 'image': '🪑', 'rating': '4.3', 'seller': 'FurnitureShop'},
-    ];
-    
     final product = products[index % products.length];
+    bool isSelected = _isProductSelected(product);
     
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+    return GestureDetector(
+      onTap: () => _toggleProductSelection(product),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          onTap: () {},
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Product image
-              Container(
-                height: 120,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                ),
-                child: Stack(
-                  children: [
-                    Center(
-                      child: Text(
-                        product['image']!,
-                        style: const TextStyle(fontSize: 40),
+          border: isSelected 
+            ? Border.all(color: AppColors.primary, width: 2)
+            : Border.all(color: Colors.grey[200]!, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Product content
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Icon/Image container
+                  Container(
+                    width: double.infinity,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: isSelected 
+                        ? AppColors.primary.withOpacity(0.1)
+                        : Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        product['icon'] as IconData,
+                        size: 40,
+                        color: isSelected ? AppColors.primary : Colors.grey[600],
                       ),
                     ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.favorite_border,
-                          color: Colors.grey[400],
-                          size: 16,
-                        ),
-                      ),
+                  ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // Product name
+                  Text(
+                    product['name']!,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
                     ),
-                  ],
-                ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  
+                  const SizedBox(height: 4),
+                  
+                  // Product description
+                  Text(
+                    product['description']!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  
+                  const Spacer(),
+                  
+                  // Price
+                  Text(
+                    product['price']!,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? AppColors.primary : Colors.grey[800],
+                    ),
+                  ),
+                ],
               ),
-              
-              // Product info
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product['name']!,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        product['seller']!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const Spacer(),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.star,
-                            color: Colors.orange[400],
-                            size: 14,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            product['rating']!,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        product['price']!,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
+            ),
+            
+            // Checkmark for selected items
+            if (isSelected)
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.3),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
+                  child: const Icon(
+                    Icons.check,
+                    color: Colors.white,
+                    size: 16,
+                  ),
                 ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );
