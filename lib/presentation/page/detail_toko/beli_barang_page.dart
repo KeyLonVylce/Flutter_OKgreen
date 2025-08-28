@@ -19,54 +19,54 @@ class _BeliBarangPageState extends State<BeliBarangPage> {
   List<Map<String, dynamic>> selectedProducts = [];
   bool showCheckoutWidget = false;
 
-  // Products data
+  // Updated products data with recycled items and different prices
   final List<Map<String, dynamic>> products = [
     {
-      'name': 'Product 1',
-      'price': 'Rp 10.000',
-      'description': 'iPhone 12 Pro - TechStore',
-      'image': null, // fallback No Image
-    },
-    {
-      'name': 'Product 1',
-      'price': 'Rp 10.000',
-      'description': 'Nike Air Force - ShoesHub',
+      'name': 'Kaleng Bekas',
+      'price': 'Rp 5.000',
+      'description': 'Kaleng coca cola bekas - RecycleShop',
       'image': null,
     },
     {
-      'name': 'Product 1',
-      'price': 'Rp 10.000',
-      'description': 'MacBook Air M1 - LaptopWorld',
+      'name': 'Botol Plastik',
+      'price': 'Rp 2.500',
+      'description': 'Botol air mineral bekas - EcoStore',
       'image': null,
     },
     {
-      'name': 'Product 1',
-      'price': 'Rp 10.000',
-      'description': 'Samsung Galaxy - PhoneShop',
+      'name': 'Kotak Rokok',
+      'price': 'Rp 3.000',
+      'description': 'Kotak rokok kosong - WasteHub',
       'image': null,
     },
     {
-      'name': 'Product 1"',
-      'price': 'Rp 10.000',
-      'description': 'iPad Pro 11" - TabletStore',
+      'name': 'Kantong Plastik',
+      'price': 'Rp 1.500',
+      'description': 'Kantong belanja bekas - GreenMarket',
       'image': null,
     },
     {
-      'name': 'Product 1',
-      'price': 'Rp 10.000',
-      'description': 'AirPods Pro - AudioHub',
+      'name': 'Kertas Koran',
+      'price': 'Rp 8.000',
+      'description': 'Kumpulan koran bekas - PaperRecycle',
       'image': null,
     },
     {
-      'name': 'Product 1',
-      'price': 'Rp 10.000',
-      'description': 'Dell Monitor - TechGear',
+      'name': 'Kardus Bekas',
+      'price': 'Rp 12.000',
+      'description': 'Kardus packaging bekas - BoxShop',
       'image': null,
     },
     {
-      'name': 'Product 1',
-      'price': 'Rp 10.000',
-      'description': 'Gaming Chair - FurnitureShop',
+      'name': 'Ban Motor',
+      'price': 'Rp 25.000',
+      'description': 'Ban motor bekas - TireRecycle',
+      'image': null,
+    },
+    {
+      'name': 'Elektronik Rusak',
+      'price': 'Rp 15.000',
+      'description': 'Spare part elektronik - TechWaste',
       'image': null,
     },
   ];
@@ -104,7 +104,7 @@ class _BeliBarangPageState extends State<BeliBarangPage> {
         // Product already selected, remove it
         selectedProducts.removeAt(existingIndex);
       } else {
-        // Product not selected, add it
+        // Product not selected, add it to cart
         selectedProducts.add(product);
       }
 
@@ -169,7 +169,7 @@ class _BeliBarangPageState extends State<BeliBarangPage> {
                             ),
                           ),
                           Text(
-                            'Temukan barang bekas berkualitas',
+                            'Temukan sampah daur ulang berkualitas',
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.8),
                               fontSize: 16,
@@ -266,7 +266,7 @@ class _BeliBarangPageState extends State<BeliBarangPage> {
                       Expanded(
                         child: TextField(
                           decoration: InputDecoration(
-                            hintText: 'Cari barang yang kamu butuhkan...',
+                            hintText: 'Cari sampah daur ulang...',
                             border: InputBorder.none,
                             hintStyle: TextStyle(
                               color: Colors.grey,

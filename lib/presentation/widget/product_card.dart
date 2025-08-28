@@ -21,7 +21,6 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 220, // lebih tinggi biar proporsional
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: backgroundColor ?? AppColors.white,
@@ -38,42 +37,54 @@ class ProductCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Area atas seukuran placeholder gambar, tapi isi teks productName
-          Container(
-            width: double.infinity,
-            height: 120,
-            decoration: BoxDecoration(
-              color: (textColor ?? AppColors.primary).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              productName ?? "No Image",
-              textAlign: TextAlign.center,
-              style: AppTextStyles.price.copyWith(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: textColor ?? AppColors.primary,
+          Expanded(
+            flex: 3,
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: (textColor ?? AppColors.primary).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                productName ?? "No Image",
+                textAlign: TextAlign.center,
+                style: AppTextStyles.price.copyWith(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: textColor ?? AppColors.primary,
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 19),
+          const SizedBox(height: 8),
           // Product description
-          Text(
-            description,
-            style: AppTextStyles.smallDescription.copyWith(
-              fontSize: 12,
-              height: 1.3,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 50),
-          // Product price
-          Text(
-            price,
-            style: AppTextStyles.price.copyWith(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    description,
+                    style: AppTextStyles.smallDescription.copyWith(
+                      fontSize: 12,
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // Product price
+                Text(
+                  price,
+                  style: AppTextStyles.price.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

@@ -37,7 +37,6 @@ class _BottomNavbarState extends State<BottomNavbar> {
       activeIcon: Icons.shopping_bag_rounded,
       label: 'Beli Barang',
     ),
-
   ];
 
   @override
@@ -102,27 +101,19 @@ class _BottomNavbarState extends State<BottomNavbar> {
   // Hitung posisi pill berdasarkan currentIndex
   double _getPillPosition() {
     double screenWidth = MediaQuery.of(context).size.width;
-    double navBarWidth = screenWidth - 60; // Total margin 40 + padding
-    double itemWidth = navBarWidth / 4;
+    double containerWidth = screenWidth - 40; // Total margin 40 (20 kiri + 20 kanan)
+    double itemWidth = containerWidth / navItems.length; // Width per item
+    double pillWidth = _getPillWidth();
     
-    switch (widget.currentIndex) {
-      case 0:
-        return 10 + 0 * itemWidth + (itemWidth - _getPillWidth()) / 2;
-      case 1:
-        return 10 + 1 * itemWidth + (itemWidth - _getPillWidth()) / 2;
-      case 2:
-        return 10 + 2 * itemWidth + (itemWidth - _getPillWidth()) / 2;
-      case 3:
-        return 10 + 3 * itemWidth + (itemWidth - _getPillWidth()) / 2;
-      default:
-        return 10 + (itemWidth - _getPillWidth()) / 2;
-    }
+    // Posisi tengah setiap item minus setengah lebar pill
+    return (widget.currentIndex * itemWidth) + (itemWidth - pillWidth) / 2;
   }
 
   double _getPillWidth() {
     double screenWidth = MediaQuery.of(context).size.width;
-    double navBarWidth = screenWidth - 60;
-    return navBarWidth / 4 * 0.75;
+    double containerWidth = screenWidth - 40;
+    double itemWidth = containerWidth / navItems.length;
+    return itemWidth * 0.85; // 85% dari lebar item untuk padding yang pas
   }
 
   Widget _buildNavItem(NavItem item) {
