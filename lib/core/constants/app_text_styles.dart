@@ -42,7 +42,7 @@ class AppTextStyles {
 
   static const pageSubtitle = TextStyle(
     fontSize: 16,
-    color: AppColors.grey600,
+    color: AppColors.white,
   );
 
   static const inputLabel = TextStyle(

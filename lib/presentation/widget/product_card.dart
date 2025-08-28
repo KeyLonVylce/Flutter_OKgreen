@@ -3,30 +3,26 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 
 class ProductCard extends StatelessWidget {
-  final String? imagePath;
-  final IconData? icon;
-  final Color? iconColor;
   final String? productName;
   final String description;
   final String price;
   final Color? backgroundColor;
+  final Color? textColor;
 
   const ProductCard({
     super.key,
-    this.imagePath,
-    this.icon,
-    this.iconColor,
     this.productName,
     required this.description,
     required this.price,
     this.backgroundColor,
+    this.textColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 200,
-      padding: const EdgeInsets.all(16),
+      height: 220, // lebih tinggi biar proporsional
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: backgroundColor ?? AppColors.white,
         borderRadius: BorderRadius.circular(16),
@@ -41,42 +37,40 @@ class ProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Product image or icon
+          // Area atas seukuran placeholder gambar, tapi isi teks productName
           Container(
-            width: 80,
-            height: 80,
+            width: double.infinity,
+            height: 120,
             decoration: BoxDecoration(
+              color: (textColor ?? AppColors.primary).withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: imagePath != null 
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    imagePath!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      // Fallback to icon if image fails to load
-                      return _buildIconContainer();
-                    },
-                  ),
-                )
-              : _buildIconContainer(),
+            alignment: Alignment.center,
+            child: Text(
+              productName ?? "No Image",
+              textAlign: TextAlign.center,
+              style: AppTextStyles.price.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: textColor ?? AppColors.primary,
+              ),
+            ),
           ),
-          const Spacer(),
+          const SizedBox(height: 19),
           // Product description
           Text(
-            description, 
+            description,
             style: AppTextStyles.smallDescription.copyWith(
-              fontSize: 11,
+              fontSize: 12,
               height: 1.3,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 50),
           // Product price
           Text(
-            price, 
+            price,
             style: AppTextStyles.price.copyWith(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -86,33 +80,43 @@ class ProductCard extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildIconContainer() {
-    return Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        color: (iconColor ?? AppColors.primary).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Icon(
-        icon ?? Icons.shopping_bag_outlined, 
-        color: iconColor ?? AppColors.primary, 
-        size: 40,
-      ),
-    );
-  }
 }
 
-// Usage example - how to implement the Row with ProductCards
+// Example usage with fallback data (Product 1-5)
 class ProductCardExample extends StatelessWidget {
   const ProductCardExample({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-      ],
+    // misalnya data gagal ambil dari API, kita pakai dummy
+    final List<Map<String, String>> fallbackProducts = List.generate(
+      5,
+      (index) => {
+        "name": "Product ${index + 1}",
+        "description": "Deskripsi singkat untuk Product ${index + 1}",
+        "price": "Rp ${(index + 1) * 10000}",
+      },
+    );
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2, // tampil 2 kolom
+        childAspectRatio: 3 / 4,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: fallbackProducts.length,
+      itemBuilder: (context, index) {
+        final product = fallbackProducts[index];
+        return ProductCard(
+          productName: product["name"],
+          description: product["description"]!,
+          price: product["price"]!,
+          textColor: AppColors.primary,
+        );
+      },
     );
   }
 }

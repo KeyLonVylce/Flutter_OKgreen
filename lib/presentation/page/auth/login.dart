@@ -67,7 +67,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
     
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.white,
       body: SingleChildScrollView(
         child: SizedBox(
           height: screenHeight,

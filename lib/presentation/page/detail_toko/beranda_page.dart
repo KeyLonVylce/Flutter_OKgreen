@@ -7,8 +7,6 @@ import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/product_card.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
 
-
-
 class BerandaPage extends StatefulWidget {
   @override
   _BerandaPageState createState() => _BerandaPageState();
@@ -26,7 +24,6 @@ class _BerandaPageState extends State<BerandaPage> {
     // Navigate to other pages based on index
     switch (index) {
       case 0:
-        // Already on beranda page
         break;
       case 1:
         Navigator.pushReplacement(
@@ -87,27 +84,19 @@ class _BerandaPageState extends State<BerandaPage> {
                       ),
                       Row(
                         children: [
-                          Icon(
-                            Icons.notifications_outlined,
-                            color: Colors.white,
-                            size: 24,
-                          ),
+                          Icon(Icons.notifications_outlined, color: Colors.white, size: 24),
                           const SizedBox(width: 12),
                           CircleAvatar(
                             radius: 18,
                             backgroundColor: Colors.white.withOpacity(0.3),
-                            child: Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 20,
-                            ),
+                            child: Icon(Icons.person, color: Colors.white, size: 20),
                           ),
                         ],
                       ),
                     ],
                   ),
                 ),
-                
+
                 Expanded(
                   child: SingleChildScrollView(
                     child: Padding(
@@ -115,7 +104,7 @@ class _BerandaPageState extends State<BerandaPage> {
                       child: Column(
                         children: [
                           const SizedBox(height: 20),
-                          
+
                           // Carousel dengan EcoProductCard
                           Container(
                             height: 160,
@@ -134,7 +123,7 @@ class _BerandaPageState extends State<BerandaPage> {
                                     EcoProductCard(),
                                   ],
                                 ),
-                                
+
                                 // Dots indicator
                                 Positioned(
                                   bottom: 12,
@@ -149,8 +138,8 @@ class _BerandaPageState extends State<BerandaPage> {
                                         width: _currentCarouselIndex == index ? 24 : 8,
                                         height: 8,
                                         decoration: BoxDecoration(
-                                          color: _currentCarouselIndex == index 
-                                              ? AppColors.primary 
+                                          color: _currentCarouselIndex == index
+                                              ? AppColors.primary
                                               : AppColors.primary.withOpacity(0.3),
                                           borderRadius: BorderRadius.circular(4),
                                         ),
@@ -161,13 +150,41 @@ class _BerandaPageState extends State<BerandaPage> {
                               ],
                             ),
                           ),
-                          
+
                           const SizedBox(height: 30),
-                          // Product Cards
-                          Row(
+
+                          // Product Cards Grid
+                          GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                            childAspectRatio: 0.8,
                             children: [
+                              // contoh produk normal (pakai imagePath)
+                              ProductCard(
+                                description: 'Product 1',
+                                price: 'Rp 10.000',
+                              ),
+                              ProductCard(
+                                description: 'Product 2',
+                                price: 'Rp 10.000',
+                              ),
+
+                              // contoh produk gagal ambil data → fallback image
+                              ProductCard(
+                                description: 'Product 3',
+                                price: 'Rp 10.000',
+                              ),
+                              ProductCard(
+
+                                description: 'Product 4',
+                                price: 'Rp 10.000',
+                              ),
                             ],
                           ),
+
                           const SizedBox(height: 100),
                         ],
                       ),
