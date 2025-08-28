@@ -16,13 +16,32 @@ class CheckoutPage extends StatefulWidget {
 class _CheckoutPageState extends State<CheckoutPage> {
   String selectedDeliveryMethod = 'Antar ke Alamat';
   String selectedPaymentMethod = 'DANA';
+  Map<String, int> productQuantities = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize quantities for each product
+    for (var product in widget.selectedProducts) {
+      productQuantities[product['name']] = 1;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    double totalPrice = widget.selectedProducts.fold(0, (sum, product) => 
-      sum + (double.tryParse(product['price'].replaceAll('\$', '')) ?? 0));
-    double discount = totalPrice * 0.1; // 10% discount
-    double finalPrice = totalPrice - discount;
+    // Calculate total price based on quantities
+    double totalPrice = 0;
+    for (var product in widget.selectedProducts) {
+      String priceStr = product['price'] ?? 'Rp 0';
+      String cleanPrice = priceStr.replaceAll('Rp ', '').replaceAll('.', '');
+      double price = double.tryParse(cleanPrice) ?? 0;
+      int quantity = productQuantities[product['name']] ?? 1;
+      totalPrice += (price * quantity);
+    }
+    
+    // Delivery fee based on selected method
+    double deliveryFee = selectedDeliveryMethod == 'Antar ke Alamat' ? 5000 : 0;
+    double finalPrice = totalPrice + deliveryFee;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -58,7 +77,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Delivery to',
+                        'Alamat Pengiriman',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.black54,
@@ -79,7 +98,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Faizan Khan, 344022',
+                    'Ahmad Fadli, 12345',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -88,7 +107,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'Opp State Bank Of India,\nAsotra, Barmer Dist,\nRajasthan IN',
+                    'Jl. Raya Cimahi No. 123,\nCimahi, Jawa Barat,\nIndonesia 40512',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.black54,
@@ -97,7 +116,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Phone: 7976382557',
+                    'Phone: 081234567890',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.black54,
@@ -125,16 +144,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildDeliveryOption('Antar ke Alamat'),
+                  _buildDeliveryOption('Antar ke Alamat', 'Rp 5.000'),
                   const SizedBox(height: 8),
-                  _buildDeliveryOption('Ambil Barang di Tempat'),
+                  _buildDeliveryOption('Ambil Barang di Tempat', 'Gratis'),
                 ],
               ),
             ),
             
             const SizedBox(height: 16),
             
-            // Selected Products Section
+            // Selected Products Section with quantity controls
             Container(
               color: Colors.white,
               padding: const EdgeInsets.all(20),
@@ -150,74 +169,164 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  SizedBox(
-                    height: 100,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: widget.selectedProducts.length,
-                      itemBuilder: (context, index) {
-                        final product = widget.selectedProducts[index];
-                        return Container(
-                          margin: const EdgeInsets.only(right: 16),
-                          child: Column(
+                  
+                  // Product list with quantity controls
+                  ...widget.selectedProducts.map((product) {
+                    String priceStr = product['price'] ?? 'Rp 0';
+                    String cleanPrice = priceStr.replaceAll('Rp ', '').replaceAll('.', '');
+                    double price = double.tryParse(cleanPrice) ?? 0;
+                    int quantity = productQuantities[product['name']] ?? 1;
+                    double subtotal = price * quantity;
+                    
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey[300]!),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
                             children: [
+                              // Product image placeholder
                               Container(
                                 width: 60,
                                 height: 60,
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[100],
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: AppColors.primary.withOpacity(0.3),
-                                    width: 2,
-                                  ),
+                                  color: AppColors.primary.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Center(
                                   child: Text(
-                                    product['image'],
-                                    style: const TextStyle(fontSize: 28),
+                                    product['name'] ?? 'Product',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primary,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                product['name'],
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.black54,
+                              const SizedBox(width: 12),
+                              
+                              // Product details
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      product['name'] ?? 'Product',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      product['description'] ?? '',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.black54,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Rp ${price.toStringAsFixed(0)}',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                  const Divider(height: 32),
-                  ...widget.selectedProducts.map((product) {
-                    double price = double.tryParse(product['price'].replaceAll('\$', '')) ?? 0;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            product['name'],
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          Text(
-                            'Rp.${(price * 15000).toStringAsFixed(0)}', // Convert to Rupiah
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black87,
-                            ),
+                          
+                          const SizedBox(height: 12),
+                          
+                          // Quantity controls and subtotal
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // Quantity controls
+                              Row(
+                                children: [
+                                  const Text(
+                                    'Qty: ',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey[300]!),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () {
+                                            if (quantity > 1) {
+                                              setState(() {
+                                                productQuantities[product['name']] = quantity - 1;
+                                              });
+                                            }
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                            child: const Text('-', style: TextStyle(fontSize: 16)),
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            border: Border.symmetric(
+                                              vertical: BorderSide(color: Colors.grey[300]!),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            quantity.toString(),
+                                            style: const TextStyle(fontSize: 14),
+                                          ),
+                                        ),
+                                        GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              productQuantities[product['name']] = quantity + 1;
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                            child: const Text('+', style: TextStyle(fontSize: 16)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              
+                              // Subtotal
+                              Text(
+                                'Rp ${subtotal.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -237,7 +346,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Pembayaran',
+                    'Metode Pembayaran',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -248,9 +357,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildPaymentOption('DANA', 'https://via.placeholder.com/80x40/0066FF/FFFFFF?text=DANA'),
+                      _buildPaymentOption('DANA'),
                       const SizedBox(width: 40),
-                      _buildPaymentOption('QRIS', 'https://via.placeholder.com/80x40/FF6B35/FFFFFF?text=QRIS'),
+                      _buildPaymentOption('QRIS'),
                     ],
                   ),
                 ],
@@ -265,22 +374,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  _buildPriceLine('Price (${widget.selectedProducts.length} items)', 'Rp.${(totalPrice * 15000).toStringAsFixed(0)}'),
+                  _buildPriceLine('Subtotal', 'Rp ${totalPrice.toStringAsFixed(0)}'),
                   const SizedBox(height: 8),
-                  _buildPriceLine('Discount', '-Rp.${(discount * 15000).toStringAsFixed(0)}', isDiscount: true),
-                  const SizedBox(height: 8),
-                  _buildPriceLine('Delivery Charges', 'FREE', isFree: true),
+                  _buildPriceLine('Ongkir', deliveryFee > 0 ? 'Rp ${deliveryFee.toStringAsFixed(0)}' : 'Gratis'),
                   const Divider(height: 24),
-                  _buildPriceLine('Total Amount', 'Rp.${(finalPrice * 15000).toStringAsFixed(0)}', isTotal: true),
-                  const SizedBox(height: 8),
-                  Text(
-                    'You saved ${(discount * 15000).toStringAsFixed(0)} on this order',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.green[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  _buildPriceLine('Total', 'Rp ${finalPrice.toStringAsFixed(0)}', isTotal: true),
                 ],
               ),
             ),
@@ -327,7 +425,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  Widget _buildDeliveryOption(String method) {
+  Widget _buildDeliveryOption(String method, String cost) {
     bool isSelected = selectedDeliveryMethod == method;
     return GestureDetector(
       onTap: () {
@@ -352,12 +450,22 @@ class _CheckoutPageState extends State<CheckoutPage> {
               color: isSelected ? AppColors.primary : Colors.grey[400],
             ),
             const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                method,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                  color: isSelected ? AppColors.primary : Colors.black87,
+                ),
+              ),
+            ),
             Text(
-              method,
+              cost,
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
-                color: isSelected ? AppColors.primary : Colors.black87,
+                fontWeight: FontWeight.w500,
+                color: isSelected ? AppColors.primary : Colors.black54,
               ),
             ),
           ],
@@ -366,7 +474,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  Widget _buildPaymentOption(String method, String imagePath) {
+  Widget _buildPaymentOption(String method) {
     bool isSelected = selectedPaymentMethod == method;
     return GestureDetector(
       onTap: () {
@@ -396,7 +504,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  Widget _buildPriceLine(String label, String value, {bool isDiscount = false, bool isFree = false, bool isTotal = false}) {
+  Widget _buildPriceLine(String label, String value, {bool isTotal = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -413,9 +521,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           style: TextStyle(
             fontSize: isTotal ? 16 : 14,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-            color: isDiscount ? Colors.green[600] : 
-                   isFree ? Colors.green[600] :
-                   isTotal ? AppColors.primary : Colors.black87,
+            color: isTotal ? AppColors.primary : Colors.black87,
           ),
         ),
       ],

@@ -16,8 +16,13 @@ class CheckoutWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (selectedProducts.isEmpty) return const SizedBox.shrink();
 
-    double totalPrice = selectedProducts.fold(0, (sum, product) => 
-      sum + (double.tryParse(product['price'].replaceAll('\$', '')) ?? 0));
+    // Fixed price parsing - handle "Rp 10.000" format
+    double totalPrice = selectedProducts.fold(0, (sum, product) {
+      String priceStr = product['price'] ?? 'Rp 0';
+      // Remove "Rp" and "." then parse
+      String cleanPrice = priceStr.replaceAll('Rp ', '').replaceAll('.', '');
+      return sum + (double.tryParse(cleanPrice) ?? 0);
+    });
 
     return Positioned(
       bottom: 90, // Above bottom navbar
@@ -95,8 +100,14 @@ class CheckoutWidget extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text(
-                          product['image'],
-                          style: const TextStyle(fontSize: 24),
+                          product['name'] ?? 'Product',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     );
@@ -121,7 +132,7 @@ class CheckoutWidget extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Total: \$${totalPrice.toStringAsFixed(0)}',
+                        'Total: Rp ${totalPrice.toStringAsFixed(0)}',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
