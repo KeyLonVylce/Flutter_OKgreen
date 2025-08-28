@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:okgreen/core/constants/app_colors.dart';
+import 'package:okgreen/core/constants/app_icons.dart'; 
 import 'package:okgreen/presentation/page/detail_toko/beli_barang_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/jual_barang_page.dart';
+import 'package:okgreen/presentation/page/detail_toko/setting_page.dart';
 import 'package:okgreen/presentation/widget/EcoProductCard.dart';
 import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/product_card.dart';
@@ -38,6 +40,25 @@ class _BerandaPageState extends State<BerandaPage> {
         );
         break;
     }
+  }
+
+  // Method untuk handle notifikasi
+  void _onNotificationTap() {
+    // Handle notification tap
+    print('Notification tapped');
+    // Tambahkan navigasi ke halaman notifikasi jika ada
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(builder: (context) => NotificationPage()),
+    // );
+  }
+
+  // Method untuk handle settings
+  void _onSettingsTap() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => SettingsPage()),
+    );
   }
 
   @override
@@ -84,12 +105,17 @@ class _BerandaPageState extends State<BerandaPage> {
                       ),
                       Row(
                         children: [
-                          Icon(Icons.notifications_outlined, color: Colors.white, size: 24),
+                          // Notification Icon menggunakan HeaderIcon
+                          HeaderIcon(
+                            icon: HeaderIcons.notification,
+                            onTap: _onNotificationTap,
+                          ),
                           const SizedBox(width: 12),
-                          CircleAvatar(
-                            radius: 18,
-                            backgroundColor: Colors.white.withOpacity(0.3),
-                            child: Icon(Icons.person, color: Colors.white, size: 20),
+                          // Settings Icon menggunakan HeaderIcon dengan style profile
+                          HeaderIcon(
+                            icon: HeaderIcons.profile,
+                            onTap: _onSettingsTap,
+                            isProfileIcon: true,
                           ),
                         ],
                       ),
