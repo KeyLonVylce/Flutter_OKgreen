@@ -153,7 +153,7 @@ class _BerandaPageState extends State<BerandaPage> {
 
                           const SizedBox(height: 30),
 
-                          // Product Cards Grid
+                          // Product Cards Grid - Fixed with required stock parameter
                           GridView.count(
                             crossAxisCount: 2,
                             shrinkWrap: true,
@@ -162,25 +162,30 @@ class _BerandaPageState extends State<BerandaPage> {
                             crossAxisSpacing: 16,
                             childAspectRatio: 0.8,
                             children: [
-                              // contoh produk normal (pakai imagePath)
+                              // Product cards with stock parameter added
                               ProductCard(
-                                description: 'Product 1',
+                                productName: 'Product 1',
+                                description: 'Sampah organik berkualitas tinggi',
                                 price: 'Rp 10.000',
+                                stock: 25, // Added stock parameter
                               ),
                               ProductCard(
-                                description: 'Product 2',
-                                price: 'Rp 10.000',
-                              ),
-
-                              // contoh produk gagal ambil data → fallback image
-                              ProductCard(
-                                description: 'Product 3',
-                                price: 'Rp 10.000',
+                                productName: 'Product 2',
+                                description: 'Botol plastik daur ulang',
+                                price: 'Rp 15.000',
+                                stock: 18, // Added stock parameter
                               ),
                               ProductCard(
-
-                                description: 'Product 4',
-                                price: 'Rp 10.000',
+                                productName: 'Product 3',
+                                description: 'Kertas bekas layak pakai',
+                                price: 'Rp 8.000',
+                                stock: 32, // Added stock parameter
+                              ),
+                              ProductCard(
+                                productName: 'Product 4',
+                                description: 'Kaleng aluminium bersih',
+                                price: 'Rp 12.000',
+                                stock: 0, // Example of out of stock item
                               ),
                             ],
                           ),

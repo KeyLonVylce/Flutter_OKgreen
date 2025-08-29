@@ -5,11 +5,15 @@ import 'package:okgreen/presentation/page/detail_toko/checkout_page.dart';
 class CheckoutWidget extends StatelessWidget {
   final List<Map<String, dynamic>> selectedProducts;
   final VoidCallback onClose;
+  final Function(Map<String, dynamic>) onRemoveItem;
+  final Function(List<Map<String, dynamic>>) onCheckoutSuccess;
 
   const CheckoutWidget({
     super.key,
     required this.selectedProducts,
     required this.onClose,
+    required this.onRemoveItem,
+    required this.onCheckoutSuccess,
   });
 
   @override
@@ -79,9 +83,9 @@ class CheckoutWidget extends StatelessWidget {
               
               const SizedBox(height: 12),
               
-              // Selected products preview
+              // Selected products preview with remove functionality
               SizedBox(
-                height: 60,
+                height: 70,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: selectedProducts.length,
@@ -89,26 +93,64 @@ class CheckoutWidget extends StatelessWidget {
                     final product = selectedProducts[index];
                     return Container(
                       margin: const EdgeInsets.only(right: 8),
-                      width: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.primary.withOpacity(0.3),
-                          width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          product['name'] ?? 'Product',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                      width: 70,
+                      child: Stack(
+                        children: [
+                          // Product preview
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.primary.withOpacity(0.3),
+                                width: 2,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                product['name'] ?? 'Product',
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                           ),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          
+                          // Remove button
+                          Positioned(
+                            top: -5,
+                            right: -5,
+                            child: GestureDetector(
+                              onTap: () => onRemoveItem(product),
+                              child: Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: Colors.red[400],
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   },
@@ -150,6 +192,7 @@ class CheckoutWidget extends StatelessWidget {
                         MaterialPageRoute(
                           builder: (context) => CheckoutPage(
                             selectedProducts: selectedProducts,
+                            onCheckoutSuccess: onCheckoutSuccess,
                           ),
                         ),
                       );
