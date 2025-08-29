@@ -3,10 +3,12 @@ import 'package:okgreen/core/constants/app_colors.dart';
 
 class CheckoutPage extends StatefulWidget {
   final List<Map<String, dynamic>> selectedProducts;
+  final Function(List<Map<String, dynamic>>)? onCheckoutSuccess;
 
   const CheckoutPage({
     super.key,
     required this.selectedProducts,
+    this.onCheckoutSuccess,
   });
 
   @override
@@ -177,6 +179,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     double price = double.tryParse(cleanPrice) ?? 0;
                     int quantity = productQuantities[product['name']] ?? 1;
                     double subtotal = price * quantity;
+                    int availableStock = product['stock'] ?? 0;
                     
                     return Container(
                       margin: const EdgeInsets.only(bottom: 16),
@@ -236,6 +239,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                     ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Stok tersedia: $availableStock',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: availableStock > 10 ? Colors.green[600] : Colors.orange[600],
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
                                     const SizedBox(height: 8),
                                     Text(
                                       'Rp ${price.toStringAsFixed(0)}',
@@ -285,7 +297,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                           },
                                           child: Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                            child: const Text('-', style: TextStyle(fontSize: 16)),
+                                            decoration: BoxDecoration(
+                                              color: quantity > 1 ? Colors.transparent : Colors.grey[200],
+                                            ),
+                                            child: Text(
+                                              '-', 
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: quantity > 1 ? Colors.black : Colors.grey,
+                                              ),
+                                            ),
                                           ),
                                         ),
                                         Container(
@@ -302,13 +323,31 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                         ),
                                         GestureDetector(
                                           onTap: () {
-                                            setState(() {
-                                              productQuantities[product['name']] = quantity + 1;
-                                            });
+                                            if (quantity < availableStock) {
+                                              setState(() {
+                                                productQuantities[product['name']] = quantity + 1;
+                                              });
+                                            } else {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text('Stok tidak mencukupi. Maksimal $availableStock'),
+                                                  duration: const Duration(seconds: 2),
+                                                ),
+                                              );
+                                            }
                                           },
                                           child: Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                            child: const Text('+', style: TextStyle(fontSize: 16)),
+                                            decoration: BoxDecoration(
+                                              color: quantity < availableStock ? Colors.transparent : Colors.grey[200],
+                                            ),
+                                            child: Text(
+                                              '+', 
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: quantity < availableStock ? Colors.black : Colors.grey,
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -572,6 +611,20 @@ class _CheckoutPageState extends State<CheckoutPage> {
             child: ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close dialog
+                
+                // Prepare purchased products with quantities for stock update
+                List<Map<String, dynamic>> purchasedProducts = [];
+                for (var product in widget.selectedProducts) {
+                  Map<String, dynamic> purchasedProduct = Map.from(product);
+                  purchasedProduct['purchasedQuantity'] = productQuantities[product['name']] ?? 1;
+                  purchasedProducts.add(purchasedProduct);
+                }
+                
+                // Call the success callback to update stock
+                if (widget.onCheckoutSuccess != null) {
+                  widget.onCheckoutSuccess!(purchasedProducts);
+                }
+                
                 Navigator.of(context).pop(); // Go back to previous page
               },
               style: ElevatedButton.styleFrom(
