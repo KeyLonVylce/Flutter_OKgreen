@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:okgreen/core/constants/app_colors.dart';
-import 'package:okgreen/core/constants/app_icons.dart'; 
+import 'package:okgreen/core/constants/app_icons.dart';
 import 'package:okgreen/presentation/page/detail_toko/beli_barang_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/jual_barang_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/setting_page.dart';
-import 'package:okgreen/presentation/widget/EcoProductCard.dart';
 import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/product_card.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
@@ -58,6 +57,38 @@ class _BerandaPageState extends State<BerandaPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => SettingsPage()),
+    );
+  }
+
+  // Method untuk membuat placeholder card
+  Widget _buildPlaceholderCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Container(
+        width: double.infinity,
+        height: 160,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(
+          Icons.image,
+          size: 50,
+          color: Colors.grey,
+        ),
+      ),
     );
   }
 
@@ -131,7 +162,7 @@ class _BerandaPageState extends State<BerandaPage> {
                         children: [
                           const SizedBox(height: 20),
 
-                          // Carousel dengan EcoProductCard
+                          // Carousel dengan Placeholder Image
                           Container(
                             height: 160,
                             child: Stack(
@@ -144,9 +175,9 @@ class _BerandaPageState extends State<BerandaPage> {
                                     });
                                   },
                                   children: [
-                                    EcoProductCard(),
-                                    EcoProductCard(),
-                                    EcoProductCard(),
+                                    _buildPlaceholderCard(),
+                                    _buildPlaceholderCard(),
+                                    _buildPlaceholderCard(),
                                   ],
                                 ),
 
