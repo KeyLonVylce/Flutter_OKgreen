@@ -5,6 +5,7 @@ import 'package:okgreen/core/constants/app_dimensions.dart';
 import 'package:okgreen/core/constants/app_decorations.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
 import 'package:okgreen/presentation/page/detail_toko/beranda_page.dart';
+import 'package:okgreen/service/auth_service.dart';
 import 'register.dart';
 
 class WaveLoginScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _loginController = TextEditingController();
   final _passwordController = TextEditingController();
+  final AuthService _authService = AuthService(); // 🆕 Instance AuthService
   
   bool _isPasswordVisible = false;
   bool _isLoading = false;
@@ -29,8 +31,11 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
   }
 
   String? _validateLogin(String? value) {
-    if (value == null || value.isEmpty) return 'Username or email is required';
-    if (value.length < 3) return 'Username must be at least 3 characters';
+    if (value == null || value.isEmpty) return 'Email is required';
+    // Update validation untuk email format
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+      return 'Please enter a valid email';
+    }
     return null;
   }
 
@@ -40,12 +45,51 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
     return null;
   }
 
+  // 🆕 Updated login method dengan AuthService
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      await Future.delayed(Duration(seconds: 2));
-      setState(() => _isLoading = false);
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => BerandaPage()));
+      
+      try {
+        final result = await _authService.login(
+          email: _loginController.text.trim(),
+          password: _passwordController.text,
+        );
+
+        setState(() => _isLoading = false);
+
+        if (result.success) {
+          // Login berhasil
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message),
+              backgroundColor: AppColors.primary,
+            ),
+          );
+          
+          // Navigate to home
+          Navigator.pushReplacement(
+            context, 
+            MaterialPageRoute(builder: (_) => BerandaPage())
+          );
+        } else {
+          // Login gagal
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Terjadi kesalahan: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -112,14 +156,15 @@ class _WaveLoginScreenState extends State<WaveLoginScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // Login Field
+                              // Email Field (Updated label)
                               TextFormField(
                                 controller: _loginController,
+                                keyboardType: TextInputType.emailAddress, // 🆕 Email keyboard
                                 validator: _validateLogin,
                                 decoration: AppInputDecorations.baseInputDecoration(
-                                  labelText: 'Username or Email',
-                                  hintText: 'Enter your username or email',
-                                  prefixIcon: Icon(Icons.person_outline),
+                                  labelText: 'Email Address', // 🆕 Updated label
+                                  hintText: 'Enter your email address',
+                                  prefixIcon: Icon(Icons.email_outlined), // 🆕 Email icon
                                 ),
                               ),
                               

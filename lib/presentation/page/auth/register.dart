@@ -4,6 +4,7 @@ import 'package:okgreen/core/constants/app_text_styles.dart';
 import 'package:okgreen/core/constants/app_dimensions.dart';
 import 'package:okgreen/core/constants/app_decorations.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
+import 'package:okgreen/service/auth_service.dart'; 
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -17,8 +18,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController(); 
+  final AuthService _authService = AuthService(); 
 
   bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false; 
   bool _isLoading = false;
 
   @override
@@ -26,21 +30,54 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose(); // 🆕
     super.dispose();
   }
 
+  // 🆕 Updated register method dengan AuthService
   Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      await Future.delayed(const Duration(seconds: 2));
-      setState(() => _isLoading = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account created successfully!'),
-          backgroundColor: AppColors.primary,
-        ),
-      );
+      try {
+        final result = await _authService.register(
+          name: _usernameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          passwordConfirmation: _confirmPasswordController.text,
+        );
+
+        setState(() => _isLoading = false);
+
+        if (result.success) {
+          // Register berhasil
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message),
+              backgroundColor: AppColors.primary,
+            ),
+          );
+          
+          // Kembali ke login page
+          Navigator.pop(context);
+        } else {
+          // Register gagal
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Terjadi kesalahan: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -113,21 +150,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                               const SizedBox(height: AppDimensions.spacingMedium),
 
-                              // Username
+                              // Username/Name
                               TextFormField(
                                 controller: _usernameController,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Username is required';
+                                    return 'Name is required'; // 🆕 Updated label
                                   }
                                   if (value.length < 3) {
-                                    return 'Username must be at least 3 characters';
+                                    return 'Name must be at least 3 characters';
                                   }
                                   return null;
                                 },
                                 decoration: AppInputDecorations.baseInputDecoration(
-                                  labelText: 'Username',
-                                  hintText: 'Choose a username',
+                                  labelText: 'Full Name', // 🆕 Updated label
+                                  hintText: 'Enter your full name',
                                   prefixIcon: const Icon(Icons.person_outline, color: AppColors.primary),
                                 ),
                               ),
@@ -160,6 +197,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     onPressed: () {
                                       setState(() {
                                         _isPasswordVisible = !_isPasswordVisible;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: AppDimensions.spacingMedium),
+
+                              // 🆕 Confirm Password
+                              TextFormField(
+                                controller: _confirmPasswordController,
+                                obscureText: !_isConfirmPasswordVisible,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please confirm your password';
+                                  }
+                                  if (value != _passwordController.text) {
+                                    return 'Passwords do not match';
+                                  }
+                                  return null;
+                                },
+                                decoration: AppInputDecorations.baseInputDecoration(
+                                  labelText: 'Confirm Password',
+                                  hintText: 'Re-enter your password',
+                                  prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _isConfirmPasswordVisible
+                                          ? Icons.visibility_off
+                                          : Icons.visibility,
+                                      color: AppColors.grey600,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
                                       });
                                     },
                                   ),
