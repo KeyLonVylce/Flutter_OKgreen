@@ -129,6 +129,7 @@ class _JualBarangPageState extends State<JualBarangPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+
           // Kategori
           _buildDropdownField(
             label: 'Kategori',
