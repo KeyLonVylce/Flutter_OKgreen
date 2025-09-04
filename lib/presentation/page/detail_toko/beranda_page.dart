@@ -7,6 +7,9 @@ import 'package:okgreen/presentation/page/detail_toko/setting_page.dart';
 import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/product_card.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
+import 'package:okgreen/service/auth_service.dart'; // Gunakan path yang konsisten
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class BerandaPage extends StatefulWidget {
   @override
@@ -17,6 +20,34 @@ class _BerandaPageState extends State<BerandaPage> {
   int _currentIndex = 0;
   PageController _pageController = PageController();
   int _currentCarouselIndex = 0;
+  String _userName = 'Pengguna';
+  final AuthService _authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  // Load user data from SharedPreferences
+  Future<void> _loadUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userDataString = prefs.getString('user_data');
+      
+      if (userDataString != null) {
+        final userData = json.decode(userDataString);
+        setState(() {
+          _userName = userData['name'] ?? userData['user']?['name'] ?? 'Pengguna';
+        });
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+      setState(() {
+        _userName = 'Pengguna';
+      });
+    }
+  }
 
   void _onNavTap(int index) {
     setState(() {
@@ -57,7 +88,10 @@ class _BerandaPageState extends State<BerandaPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => SettingsPage()),
-    );
+    ).then((_) {
+      // Reload user data when returning from settings
+      _loadUserData();
+    });
   }
 
   // Method untuk membuat placeholder card
@@ -126,12 +160,15 @@ class _BerandaPageState extends State<BerandaPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Hello, Dika Indradhy Wijaya',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
+                      Expanded(
+                        child: Text(
+                          'Hello, $_userName',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Row(
@@ -210,7 +247,7 @@ class _BerandaPageState extends State<BerandaPage> {
 
                           const SizedBox(height: 30),
 
-                          // Product Cards Grid
+                          // Product Cards Grid - Fixed with required stock parameter
                           GridView.count(
                             crossAxisCount: 2,
                             shrinkWrap: true,
@@ -219,25 +256,30 @@ class _BerandaPageState extends State<BerandaPage> {
                             crossAxisSpacing: 16,
                             childAspectRatio: 0.8,
                             children: [
-                              // contoh produk normal (pakai imagePath)
+                              // Product cards with stock parameter added
                               ProductCard(
-                                description: 'Product 1',
+                                productName: 'Product 1',
+                                description: 'Sampah organik berkualitas tinggi',
                                 price: 'Rp 10.000',
+                                stock: 25, // Added stock parameter
                               ),
                               ProductCard(
-                                description: 'Product 2',
-                                price: 'Rp 10.000',
-                              ),
-
-                              // contoh produk gagal ambil data → fallback image
-                              ProductCard(
-                                description: 'Product 3',
-                                price: 'Rp 10.000',
+                                productName: 'Product 2',
+                                description: 'Botol plastik daur ulang',
+                                price: 'Rp 15.000',
+                                stock: 18, // Added stock parameter
                               ),
                               ProductCard(
-
-                                description: 'Product 4',
-                                price: 'Rp 10.000',
+                                productName: 'Product 3',
+                                description: 'Kertas bekas layak pakai',
+                                price: 'Rp 8.000',
+                                stock: 32, // Added stock parameter
+                              ),
+                              ProductCard(
+                                productName: 'Product 4',
+                                description: 'Kaleng aluminium bersih',
+                                price: 'Rp 12.000',
+                                stock: 0, // Example of out of stock item
                               ),
                             ],
                           ),

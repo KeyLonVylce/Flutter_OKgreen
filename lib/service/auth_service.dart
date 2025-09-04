@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'api_client.dart';
 import 'api_response.dart';
 
@@ -64,6 +65,9 @@ class AuthService {
           await _saveToken(token);
         }
 
+        // Simpan data user ke SharedPreferences
+        await _saveUserData(data);
+
         return ApiResponse<Map<String, dynamic>>(
           success: true,
           message: data['message'] ?? 'Login berhasil',
@@ -82,11 +86,12 @@ class AuthService {
     }
   }
 
-  // Logout (hapus token lokal)
+  // Logout (hapus token lokal dan data user)
   Future<ApiResponse<void>> logout() async {
     try {
-      // Hapus token dari local storage
+      // Hapus token dan data user dari local storage
       await _clearTokens();
+      await _clearUserData();
 
       return ApiResponse<void>(
         success: true,
@@ -114,15 +119,45 @@ class AuthService {
     return prefs.getString('access_token');
   }
 
+  // Get stored user data
+  Future<Map<String, dynamic>?> getUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userDataString = prefs.getString('user_data');
+      
+      if (userDataString != null) {
+        return json.decode(userDataString) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      print('Error getting user data: $e');
+      return null;
+    }
+  }
+
   // Private methods
   Future<void> _saveToken(String accessToken) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('access_token', accessToken);
   }
 
+  Future<void> _saveUserData(Map<String, dynamic> userData) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_data', json.encode(userData));
+    } catch (e) {
+      print('Error saving user data: $e');
+    }
+  }
+
   Future<void> _clearTokens() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('access_token');
+  }
+
+  Future<void> _clearUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user_data');
   }
 
   ApiResponse<T> _handleError<T>(DioException e) {
