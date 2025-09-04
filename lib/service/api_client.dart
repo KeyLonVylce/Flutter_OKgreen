@@ -4,7 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
   factory ApiClient() => _instance;
-  ApiClient._internal();
+  
+  ApiClient._internal() {
+    init(); // Panggil init() di constructor
+  }
 
   static const String baseUrl = 'http://localhost:8000/api';
   late Dio _dio;
@@ -33,16 +36,13 @@ class ApiClient {
         handler.next(options);
       },
       onError: (error, handler) {
-        // Handle token expired
         if (error.response?.statusCode == 401) {
-          // Redirect to login atau hapus token
           _clearTokens();
         }
         handler.next(error);
       },
     ));
 
-    // Add logging interceptor (optional)
     _dio.interceptors.add(LogInterceptor(
       requestBody: true,
       responseBody: true,
