@@ -7,6 +7,9 @@ import 'package:okgreen/presentation/page/detail_toko/setting_page.dart';
 import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/product_card.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
+import 'package:okgreen/service/auth_service.dart'; // Gunakan path yang konsisten
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class BerandaPage extends StatefulWidget {
   @override
@@ -17,6 +20,34 @@ class _BerandaPageState extends State<BerandaPage> {
   int _currentIndex = 0;
   PageController _pageController = PageController();
   int _currentCarouselIndex = 0;
+  String _userName = 'Pengguna';
+  final AuthService _authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  // Load user data from SharedPreferences
+  Future<void> _loadUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userDataString = prefs.getString('user_data');
+      
+      if (userDataString != null) {
+        final userData = json.decode(userDataString);
+        setState(() {
+          _userName = userData['name'] ?? userData['user']?['name'] ?? 'Pengguna';
+        });
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+      setState(() {
+        _userName = 'Pengguna';
+      });
+    }
+  }
 
   void _onNavTap(int index) {
     setState(() {
@@ -57,7 +88,10 @@ class _BerandaPageState extends State<BerandaPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => SettingsPage()),
-    );
+    ).then((_) {
+      // Reload user data when returning from settings
+      _loadUserData();
+    });
   }
 
   // Method untuk membuat placeholder card
@@ -126,12 +160,15 @@ class _BerandaPageState extends State<BerandaPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Hello, Dika Indradhy Wijaya',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
+                      Expanded(
+                        child: Text(
+                          'Hello, $_userName',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Row(
