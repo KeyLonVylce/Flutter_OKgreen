@@ -4,14 +4,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
   factory ApiClient() => _instance;
-  ApiClient._internal();
+  ApiClient._internal() {
+    _initDio(); // Auto initialize saat instance dibuat
+  }
 
   static const String baseUrl = 'http://localhost:8000/api';
   late Dio _dio;
 
   Dio get dio => _dio;
 
-  void init() {
+  void _initDio() {
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 30),

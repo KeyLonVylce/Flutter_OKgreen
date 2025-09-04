@@ -2,9 +2,49 @@ import 'package:flutter/material.dart';
 import 'package:okgreen/core/constants/app_icons.dart';
 import 'package:okgreen/presentation/page/auth/login.dart';
 import 'package:okgreen/presentation/page/detail_toko/hubungi_kami.dart';
+import 'package:okgreen/service/auth_service.dart'; // Gunakan hanya satu import path
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
+
+  @override
+  _SettingsPageState createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  String _userName = 'Pengguna';
+  String _userEmail = '';
+  final AuthService _authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  // Load user data from SharedPreferences
+  Future<void> _loadUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userDataString = prefs.getString('user_data');
+      
+      if (userDataString != null) {
+        final userData = json.decode(userDataString);
+        setState(() {
+          _userName = userData['name'] ?? userData['user']?['name'] ?? 'Pengguna';
+          _userEmail = userData['email'] ?? userData['user']?['email'] ?? '';
+        });
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+      setState(() {
+        _userName = 'Pengguna';
+        _userEmail = '';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,24 +87,44 @@ class SettingsPage extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Row(
+              child: Row(
                 children: [
                   CircleAvatar(
                     radius: 30,
                     backgroundColor: Colors.grey,
-                    child: Icon(
-                      Icons.person,
-                      size: 35,
-                      color: Colors.white,
+                    child: Text(
+                      _userName.isNotEmpty ? _userName[0].toUpperCase() : 'P',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  SizedBox(width: 16),
-                  Text(
-                    'Pengguna',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _userName,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (_userEmail.isNotEmpty)
+                          Text(
+                            _userEmail,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
                     ),
                   ),
                 ],
@@ -216,9 +276,37 @@ class SettingsPage extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                // Handle logout logic here
+              onPressed: () async {
+                Navigator.of(context).pop(); // Close dialog
+                
+                try {
+                  // Perform logout
+                  final result = await _authService.logout();
+                  
+                  if (result.success) {
+                    // Clear user data from SharedPreferences
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.remove('user_data');
+                    
+                 
+                  } else {
+                    // Show error message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(result.message ?? 'Logout gagal'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  // Handle error
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Terjadi kesalahan: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               },
               child: const Text(
                 'Keluar',
