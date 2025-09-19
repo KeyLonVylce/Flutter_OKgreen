@@ -5,29 +5,36 @@ import 'api_response.dart';
 class UserService {
   final ApiClient _apiClient = ApiClient();
 
-  // Update user profile berdasarkan API PUT /users/{id}
+  // Update user profile menggunakan endpoint /profile untuk user yang sedang login
   Future<ApiResponse<Map<String, dynamic>>> updateProfile({
-    required int userId,
+    required int userId, // Parameter ini tidak digunakan karena pakai endpoint /profile
     String? name,
     String? email,
     String? phone,
     String? address,
+    String? dateOfBirth,
+    String? gender,
   }) async {
     try {
       final Map<String, dynamic> data = {};
       
-      if (name != null) data['name'] = name;
-      if (email != null) data['email'] = email;
-      if (phone != null) data['phone'] = phone;
-      if (address != null) data['address'] = address;
+      if (name != null && name.isNotEmpty) data['name'] = name;
+      if (email != null && email.isNotEmpty) data['email'] = email;
+      if (phone != null && phone.isNotEmpty) data['phone_number'] = phone;
+      if (address != null && address.isNotEmpty) data['address'] = address;
+      if (dateOfBirth != null && dateOfBirth.isNotEmpty) data['date_of_birth'] = dateOfBirth;
+      if (gender != null && gender.isNotEmpty) data['gender'] = gender;
 
-      final response = await _apiClient.dio.put('/users/$userId', data: data);
+      print('Sending data: $data'); // Debug log
+      
+      // Gunakan endpoint /profile untuk user yang sedang login (sesuai routes Laravel)
+      final response = await _apiClient.dio.put('/profile', data: data);
 
       if (response.statusCode == 200) {
         return ApiResponse<Map<String, dynamic>>(
           success: true,
-          message: response.data['message'] ?? 'Profil berhasil diperbarui',
-          data: response.data['data'] ?? response.data,
+          message: 'Profil berhasil diperbarui',
+          data: response.data,
           statusCode: response.statusCode,
         );
       } else {
@@ -38,11 +45,12 @@ class UserService {
         );
       }
     } on DioException catch (e) {
+      print('DioException: ${e.message}'); // Debug log
+      print('Response data: ${e.response?.data}'); // Debug log
       return _handleError(e);
     }
   }
 
-  // Private method untuk handle error
   ApiResponse<T> _handleError<T>(DioException e) {
     String message = 'Terjadi kesalahan';
     
@@ -50,7 +58,6 @@ class UserService {
       final data = e.response!.data;
       if (data is Map<String, dynamic>) {
         message = data['message'] ?? message;
-        // Handle validation errors
         if (data['errors'] != null) {
           final errors = data['errors'] as Map<String, dynamic>;
           final firstError = errors.values.first;
