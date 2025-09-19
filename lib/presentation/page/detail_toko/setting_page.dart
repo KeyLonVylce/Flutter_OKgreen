@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:okgreen/core/constants/app_icons.dart';
 import 'package:okgreen/presentation/page/auth/login.dart';
 import 'package:okgreen/presentation/page/detail_toko/hubungi_kami.dart';
-import 'package:okgreen/service/auth_service.dart'; // Gunakan hanya satu import path
+import 'package:okgreen/presentation/page/detail_toko/profil.dart';
+import 'package:okgreen/service/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
@@ -16,6 +17,8 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   String _userName = 'Pengguna';
   String _userEmail = '';
+  Map<String, dynamic>? _userData; // Store complete user data
+  int? _userId; // Store user ID
   final AuthService _authService = AuthService();
 
   @override
@@ -33,6 +36,8 @@ class _SettingsPageState extends State<SettingsPage> {
       if (userDataString != null) {
         final userData = json.decode(userDataString);
         setState(() {
+          _userData = userData; // Store complete data
+          _userId = userData['id'] ?? userData['user']?['id']; // Get user ID
           _userName = userData['name'] ?? userData['user']?['name'] ?? 'Pengguna';
           _userEmail = userData['email'] ?? userData['user']?['email'] ?? '';
         });
@@ -42,7 +47,33 @@ class _SettingsPageState extends State<SettingsPage> {
       setState(() {
         _userName = 'Pengguna';
         _userEmail = '';
+        _userData = null;
+        _userId = null;
       });
+    }
+  }
+
+  // Save updated user data to SharedPreferences
+  Future<void> _saveUserData(Map<String, dynamic> updatedData) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Merge dengan data yang sudah ada
+      final existingData = _userData ?? {};
+      final mergedData = {...existingData, ...updatedData};
+      
+      await prefs.setString('user_data', json.encode(mergedData));
+      
+      // Update state dengan data baru
+      setState(() {
+        _userData = mergedData;
+        _userName = mergedData['name'] ?? 'Pengguna';
+        _userEmail = mergedData['email'] ?? '';
+      });
+      
+      print('User data saved successfully: ${mergedData['name']}');
+    } catch (e) {
+      print('Error saving user data: $e');
     }
   }
 
@@ -153,8 +184,39 @@ class _SettingsPageState extends State<SettingsPage> {
                   _buildMenuItem(
                     icon: SettingIcons.privacy,
                     title: 'Informasi Pribadi',
-                    onTap: () {
-                      // Handle tap
+                    onTap: () async {
+                      if (_userId != null) {
+                        // Navigate to ProfilPage
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ProfilPage(
+                              userId: _userId!,
+                              userData: _userData,
+                            ),
+                          ),
+                        );
+                        
+                        // Jika data dikembalikan dari ProfilPage, update data
+                        if (result is Map<String, dynamic>) {
+                          await _saveUserData(result); // Save to SharedPreferences dan update state
+                          
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Data profil berhasil diperbarui'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } else {
+                        // Show error if user ID is not available
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Data pengguna tidak tersedia. Silakan login ulang.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     },
                   ),
                   _buildDivider(),
@@ -288,7 +350,11 @@ class _SettingsPageState extends State<SettingsPage> {
                     final prefs = await SharedPreferences.getInstance();
                     await prefs.remove('user_data');
                     
-                 
+                    // Navigate to login page
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => WaveLoginScreen()),
+                      (route) => false,
+                    );
                   } else {
                     // Show error message
                     ScaffoldMessenger.of(context).showSnackBar(
