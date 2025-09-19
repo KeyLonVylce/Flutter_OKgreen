@@ -3,11 +3,13 @@ import 'package:okgreen/core/constants/app_colors.dart';
 import 'package:okgreen/core/constants/app_icons.dart';
 import 'package:okgreen/presentation/page/detail_toko/beli_barang_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/jual_barang_page.dart';
+import 'package:okgreen/presentation/page/detail_toko/product_detail_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/setting_page.dart';
 import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/product_card.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
-import 'package:okgreen/service/auth_service.dart'; // Gunakan path yang konsisten
+import 'package:okgreen/service/auth_service.dart';
+import 'package:okgreen/service/product_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
@@ -22,11 +24,16 @@ class _BerandaPageState extends State<BerandaPage> {
   int _currentCarouselIndex = 0;
   String _userName = 'Pengguna';
   final AuthService _authService = AuthService();
+  
+  // Product data
+  List<Map<String, dynamic>> products = [];
+  bool isLoadingProducts = true;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadProducts();
   }
 
   // Load user data from SharedPreferences
@@ -49,11 +56,49 @@ class _BerandaPageState extends State<BerandaPage> {
     }
   }
 
+  // Load products from service - same as BeliBarangPage
+  Future<void> _loadProducts() async {
+    setState(() {
+      isLoadingProducts = true;
+    });
+
+    try {
+      final productData = await ProductService.getAllProducts();
+      setState(() {
+        products = productData;
+        isLoadingProducts = false;
+      });
+    } catch (e) {
+      print('Error loading products: $e');
+      setState(() {
+        products = [];
+        isLoadingProducts = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memuat data produk'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  // Get 4 random products
+  List<Map<String, dynamic>> _getRandomProducts() {
+    if (products.isEmpty) return [];
+    List<Map<String, dynamic>> shuffledProducts = List.from(products);
+    shuffledProducts.shuffle();
+    return shuffledProducts.take(4).toList();
+  }
+
   void _onNavTap(int index) {
     setState(() {
       _currentIndex = index;
     });
-    // Navigate to other pages based on index
     switch (index) {
       case 0:
         break;
@@ -72,29 +117,35 @@ class _BerandaPageState extends State<BerandaPage> {
     }
   }
 
-  // Method untuk handle notifikasi
   void _onNotificationTap() {
-    // Handle notification tap
     print('Notification tapped');
-    // Tambahkan navigasi ke halaman notifikasi jika ada
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(builder: (context) => NotificationPage()),
-    // );
   }
 
-  // Method untuk handle settings
   void _onSettingsTap() {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => SettingsPage()),
     ).then((_) {
-      // Reload user data when returning from settings
       _loadUserData();
     });
   }
 
-  // Method untuk membuat placeholder card
+  void _onProductTap(Map<String, dynamic> product) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProductDetailPage(
+          product: product,
+          previousPage: 'beranda',
+        ),
+      ),
+    );
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => BeliBarangPage()),
+    );
+  }
+
   Widget _buildPlaceholderCard() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -132,7 +183,6 @@ class _BerandaPageState extends State<BerandaPage> {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // TopWave background
           ClipPath(
             clipper: TopWaveClipper(),
             child: Container(
@@ -150,11 +200,9 @@ class _BerandaPageState extends State<BerandaPage> {
               ),
             ),
           ),
-          // Main content
           SafeArea(
             child: Column(
               children: [
-                // Header with greeting and icons
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
                   child: Row(
@@ -173,13 +221,11 @@ class _BerandaPageState extends State<BerandaPage> {
                       ),
                       Row(
                         children: [
-                          // Notification Icon menggunakan HeaderIcon
                           HeaderIcon(
                             icon: HeaderIcons.notification,
                             onTap: _onNotificationTap,
                           ),
                           const SizedBox(width: 12),
-                          // Settings Icon menggunakan HeaderIcon dengan style profile
                           HeaderIcon(
                             icon: HeaderIcons.profile,
                             onTap: _onSettingsTap,
@@ -199,7 +245,6 @@ class _BerandaPageState extends State<BerandaPage> {
                         children: [
                           const SizedBox(height: 20),
 
-                          // Carousel dengan Placeholder Image
                           Container(
                             height: 160,
                             child: Stack(
@@ -217,8 +262,6 @@ class _BerandaPageState extends State<BerandaPage> {
                                     _buildPlaceholderCard(),
                                   ],
                                 ),
-
-                                // Dots indicator
                                 Positioned(
                                   bottom: 12,
                                   left: 0,
@@ -247,42 +290,104 @@ class _BerandaPageState extends State<BerandaPage> {
 
                           const SizedBox(height: 30),
 
-                          // Product Cards Grid - Fixed with required stock parameter
-                          GridView.count(
-                            crossAxisCount: 2,
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: 16,
-                            crossAxisSpacing: 16,
-                            childAspectRatio: 0.8,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              // Product cards with stock parameter added
-                              ProductCard(
-                                productName: 'Product 1',
-                                description: 'Sampah organik berkualitas tinggi',
-                                price: 'Rp 10.000',
-                                stock: 25, // Added stock parameter
-                              ),
-                              ProductCard(
-                                productName: 'Product 2',
-                                description: 'Botol plastik daur ulang',
-                                price: 'Rp 15.000',
-                                stock: 18, // Added stock parameter
-                              ),
-                              ProductCard(
-                                productName: 'Product 3',
-                                description: 'Kertas bekas layak pakai',
-                                price: 'Rp 8.000',
-                                stock: 32, // Added stock parameter
-                              ),
-                              ProductCard(
-                                productName: 'Product 4',
-                                description: 'Kaleng aluminium bersih',
-                                price: 'Rp 12.000',
-                                stock: 0, // Example of out of stock item
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => BeliBarangPage()),
+                                  );
+                                },
+                                child: Text(
+                                  'Lihat Semua',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
+
+                          const SizedBox(height: 16),
+
+                          isLoadingProducts 
+                              ? const Center(child: CircularProgressIndicator())
+                              : GridView.builder(
+                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    crossAxisSpacing: 15,
+                                    mainAxisSpacing: 15,
+                                    childAspectRatio: 0.8,
+                                  ),
+                                  shrinkWrap: true,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  itemCount: products.take(4).length,
+                                  itemBuilder: (context, index) {
+                                    final product = products[index];
+                                    final stock = (product['stock'] ?? 0) is int ? product['stock'] as int : 0;
+                                    final price = product['price']?.toString() ?? '0';
+
+                                    return GestureDetector(
+                                      onTap: () => _onProductTap(product),
+                                      child: Stack(
+                                        children: [
+                                          ProductCard(
+                                            productName: product['name'] ?? 'Produk',
+                                            description: product['description'] ?? '',
+                                            price: price,
+                                            stock: stock,
+                                            textColor: AppColors.primary,
+                                          ),
+
+                                          if (stock <= 5 && stock > 0)
+                                            Positioned(
+                                              top: 8,
+                                              left: 8,
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.orange,
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  'Stok $stock',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+
+                                          if (stock <= 0)
+                                            Positioned.fill(
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black.withOpacity(0.6),
+                                                  borderRadius: BorderRadius.circular(16),
+                                                ),
+                                                child: const Center(
+                                                  child: Text(
+                                                    'HABIS',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 16,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
 
                           const SizedBox(height: 100),
                         ],

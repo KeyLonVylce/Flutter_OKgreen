@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:okgreen/core/constants/app_colors.dart';
 import 'package:okgreen/presentation/page/detail_toko/beranda_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/jual_barang_page.dart';
+import 'package:okgreen/presentation/page/detail_toko/product_detail_page.dart';
 import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
 import 'package:okgreen/presentation/widget/checkout_widget.dart';
@@ -189,13 +190,107 @@ class _BeliBarangPageState extends State<BeliBarangPage> with TickerProviderStat
     }
   }
 
-  void _onProductTap(Map<String, dynamic> product, int index) {
+  void _onProductTap(Map<String, dynamic> product, int index) async {
     if (isInSelectionMode) {
       _toggleProductSelection(product, index);
     } else {
-      // TODO: Navigate to product detail page
-      print("Navigate to ${product['name']} detail");
+      // Navigate to product detail page
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProductDetailPage(product: product),
+        ),
+      );
+      
+      // Handle result from product detail page
+      if (result != null && result is Map<String, dynamic>) {
+        final action = result['action'];
+        final productWithQuantity = result['product'];
+        
+        if (action == 'add_to_cart') {
+          _addProductToCart(productWithQuantity);
+        } else if (action == 'buy_now') {
+          _buyProductNow(productWithQuantity);
+        }
+      }
     }
+  }
+
+  // Method baru untuk menambah ke keranjang dari detail page
+  void _addProductToCart(Map<String, dynamic> product) {
+    final stock = product['stock'] as int;
+    final quantity = product['purchasedQuantity'] as int;
+    
+    if (stock <= 0) {
+      _showErrorSnackbar('Stok produk habis');
+      return;
+    }
+    
+    if (quantity > stock) {
+      _showErrorSnackbar('Jumlah melebihi stok tersedia');
+      return;
+    }
+    
+    setState(() {
+      // Check if product already in cart
+      final existingIndex = selectedProducts.indexWhere((item) => item['id'] == product['id']);
+      
+      if (existingIndex >= 0) {
+        // Update quantity if already exists
+        int currentQty = selectedProducts[existingIndex]['purchasedQuantity'] ?? 1;
+        int newQty = currentQty + quantity;
+        
+        if (newQty <= stock) {
+          selectedProducts[existingIndex]['purchasedQuantity'] = newQty;
+          _showSuccessSnackbar('Jumlah produk diperbarui di keranjang');
+        } else {
+          _showErrorSnackbar('Total jumlah melebihi stok tersedia');
+          return;
+        }
+      } else {
+        // Add new product
+        selectedProducts.add(product);
+        _showSuccessSnackbar('Produk ditambahkan ke keranjang');
+      }
+      
+      if (!isInSelectionMode) {
+        isInSelectionMode = true;
+      }
+      
+      showCheckoutWidget = selectedProducts.isNotEmpty;
+    });
+  }
+
+  // Method baru untuk beli langsung dari detail page
+  void _buyProductNow(Map<String, dynamic> product) async {
+    final stock = product['stock'] as int;
+    final quantity = product['purchasedQuantity'] as int;
+    
+    if (stock <= 0) {
+      _showErrorSnackbar('Stok produk habis');
+      return;
+    }
+    
+    if (quantity > stock) {
+      _showErrorSnackbar('Jumlah melebihi stok tersedia');
+      return;
+    }
+    
+    // Clear current cart and add this product
+    setState(() {
+      selectedProducts.clear();
+      selectedProducts.add(product);
+      isInSelectionMode = true;
+      showCheckoutWidget = true;
+    });
+    
+    // Show success message
+    _showSuccessSnackbar('Produk siap untuk checkout');
+    
+    // Optional: Auto-scroll to show checkout widget
+    Future.delayed(const Duration(milliseconds: 500), () {
+      // You can add scroll logic here if needed
+    });
   }
 
   void _toggleProductSelection(Map<String, dynamic> product, int index) {
@@ -246,6 +341,7 @@ class _BeliBarangPageState extends State<BeliBarangPage> with TickerProviderStat
       selectedProducts.clear();
       showCheckoutWidget = false;
     });
+    _showSuccessSnackbar('Mode pilih dibatalkan');
   }
 
   void _removeFromCart(Map<String, dynamic> product) {
