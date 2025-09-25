@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:okgreen/core/constants/app_colors.dart';
-import 'package:okgreen/presentation/page/detail_toko/checkout_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final Map<String, dynamic> product;
-  final String? previousPage; // Add parameter to track previous page
+  final String? previousPage;
 
   const ProductDetailPage({
     super.key,
@@ -17,20 +17,16 @@ class ProductDetailPage extends StatefulWidget {
 }
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
-  int selectedQuantity = 1;
-  int maxQuantity = 1;
+  // URL website untuk redirect
+  static const String websiteUrl = 'https://okgreen.com'; // Ganti dengan URL website Anda
   
-  @override
-  void initState() {
-    super.initState();
-    maxQuantity = (widget.product['stock'] as int).clamp(1, 10);
-  }
-
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
     final stock = product['stock'] as int;
     final isOutOfStock = stock <= 0;
+    final imageList = product['images'] ?? [];
+    final hasImages = imageList.isNotEmpty;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -60,24 +56,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     color: Colors.black.withOpacity(0.3),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.favorite_border, color: Colors.white),
-                ),
-                onPressed: () {
-                  // TODO: Implementasi wishlist
-                },
-              ),
-              IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
-                    shape: BoxShape.circle,
-                  ),
                   child: const Icon(Icons.share, color: Colors.white),
                 ),
-                onPressed: () {
-                  // TODO: Implementasi share
-                },
+                onPressed: () => _shareProduct(),
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
@@ -95,26 +76,45 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    // Placeholder untuk gambar produk
-                    Center(
-                      child: Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
-                            width: 2,
+                    // Product image or placeholder
+                    if (hasImages)
+                      PageView.builder(
+                        itemCount: imageList.length,
+                        itemBuilder: (context, index) {
+                          return Image.network(
+                            imageList[index],
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return _buildPlaceholder();
+                            },
+                          );
+                        },
+                      )
+                    else
+                      _buildPlaceholder(),
+                      
+                    // Image counter badge
+                    if (imageList.length > 1)
+                      Positioned(
+                        top: 60,
+                        right: 20,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '1/${imageList.length}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                        child: Icon(
-                          Icons.recycling,
-                          size: 80,
-                          color: Colors.white.withOpacity(0.8),
-                        ),
                       ),
-                    ),
+                    
                     // Gradient overlay
                     Positioned(
                       bottom: 0,
@@ -273,69 +273,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
                     const SizedBox(height: 24),
 
-                    // Quantity selector (only if in stock)
-                    if (!isOutOfStock) ...[
-                      Text(
-                        'Jumlah',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              onPressed: selectedQuantity > 1 
-                                  ? () => setState(() => selectedQuantity--) 
-                                  : null,
-                              icon: const Icon(Icons.remove),
-                              style: IconButton.styleFrom(
-                                backgroundColor: selectedQuantity > 1 
-                                    ? AppColors.primary 
-                                    : Colors.grey[300],
-                                foregroundColor: selectedQuantity > 1 
-                                    ? Colors.white 
-                                    : Colors.grey[500],
-                              ),
-                            ),
-                            Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 16),
-                              child: Text(
-                                '$selectedQuantity kg',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: selectedQuantity < maxQuantity 
-                                  ? () => setState(() => selectedQuantity++) 
-                                  : null,
-                              icon: const Icon(Icons.add),
-                              style: IconButton.styleFrom(
-                                backgroundColor: selectedQuantity < maxQuantity 
-                                    ? AppColors.primary 
-                                    : Colors.grey[300],
-                                foregroundColor: selectedQuantity < maxQuantity 
-                                    ? Colors.white 
-                                    : Colors.grey[500],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
+                    // Product Information Section
+                    _buildInfoSection('Informasi Produk', [
+                      _buildInfoRow('Kondisi', product['condition'] ?? 'Baik'),
+                      _buildInfoRow('Berat', product['weight'] ?? '1 kg'),
+                      _buildInfoRow('Penjual', product['seller'] ?? 'EcoWaste Store'),
+                      _buildInfoRow('Kategori', product['category'] ?? '-'),
+                    ]),
+
+                    const SizedBox(height: 24),
 
                     // Description
                     const Text(
@@ -356,9 +302,127 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       ),
                     ),
 
+                    const SizedBox(height: 32),
+
+                    // CTA Section untuk redirect ke website
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primary.withOpacity(0.1),
+                            AppColors.primary.withOpacity(0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.shopping_cart_outlined,
+                            size: 48,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Tertarik dengan produk ini?',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Kunjungi website kami untuk melakukan pembelian atau menjual produk serupa',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () => _openWebsite('buy'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.shopping_bag, size: 18),
+                                  label: const Text(
+                                    'Beli Produk',
+                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _openWebsite('sell'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.primary,
+                                    side: BorderSide(color: AppColors.primary),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.sell, size: 18),
+                                  label: const Text(
+                                    'Jual Serupa',
+                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
                     const SizedBox(height: 24),
 
-                    const SizedBox(height: 100), // Space for floating button
+                    // App info footer
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: Colors.grey[600],
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Aplikasi mobile ini khusus untuk melihat informasi dan riwayat produk. Untuk transaksi, silakan kunjungi website kami.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
@@ -366,72 +430,104 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           ),
         ],
       ),
+    );
+  }
 
-      // Floating action buttons
-      floatingActionButton: isOutOfStock 
-          ? null
-          : Container(
-              margin: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  // Add to cart button
-                  Expanded(
-                    child: FloatingActionButton.extended(
-                      onPressed: () => _addToCart(context),
-                      backgroundColor: AppColors.primary.withOpacity(0.1),
-                      foregroundColor: AppColors.primary,
-                      elevation: 0,
-                      icon: const Icon(Icons.shopping_cart_outlined),
-                      label: const Text(
-                        'Tambah ke Keranjang',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Buy now button - Navigate directly to checkout
-                  Expanded(
-                    child: FloatingActionButton.extended(
-                      onPressed: () => _buyNowDirectCheckout(context),
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      icon: const Icon(Icons.shopping_bag),
-                      label: const Text(
-                        'Beli Sekarang',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
-                ],
+  Widget _buildPlaceholder() {
+    return Center(
+      child: Container(
+        width: 200,
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.3),
+            width: 2,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.recycling,
+              size: 60,
+              color: Colors.white.withOpacity(0.8),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              widget.product['name'] ?? 'Produk',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
             ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoSection(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[200]!),
+          ),
+          child: Column(
+            children: children,
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100,
+            width: 80,
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          const Text(' : '),
+          const Text(
+            ': ',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey,
+            ),
+          ),
           Expanded(
             child: Text(
               value,
               style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
                 color: Colors.black87,
               ),
             ),
@@ -441,56 +537,72 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 
-  void _addToCart(BuildContext context) {
-    // Create product copy with quantity
-    Map<String, dynamic> productWithQuantity = Map.from(widget.product);
-    productWithQuantity['purchasedQuantity'] = selectedQuantity;
+  // Open website for buy or sell
+  Future<void> _openWebsite(String action) async {
+    String url = websiteUrl;
     
-    // Return product to previous page
-    Navigator.pop(context, {
-      'action': 'add_to_cart',
-      'product': productWithQuantity,
-    });
+    // Add parameters based on action and product
+    if (action == 'buy') {
+      url += '/products/${widget.product['id']}';
+    } else if (action == 'sell') {
+      url += '/sell?category=${widget.product['waste_category_id']}';
+    }
+    
+    try {
+      final Uri uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication, // Opens in external browser
+        );
+      } else {
+        _showErrorDialog('Tidak dapat membuka website');
+      }
+    } catch (e) {
+      _showErrorDialog('Terjadi kesalahan saat membuka website');
+    }
   }
 
-  void _buyNow(BuildContext context) {
-    // Create product copy with quantity for immediate checkout
-    Map<String, dynamic> productWithQuantity = Map.from(widget.product);
-    productWithQuantity['purchasedQuantity'] = selectedQuantity;
-    
-    // Return product for immediate purchase
-    Navigator.pop(context, {
-      'action': 'buy_now',
-      'product': productWithQuantity,
-    });
+  // Share product
+  void _shareProduct() {
+    final String productName = widget.product['name'];
+    final String productPrice = widget.product['price'];
+    final String shareText = '''
+Lihat produk ini di OkGreen:
+$productName - $productPrice
+
+Kunjungi $websiteUrl untuk informasi lebih lanjut
+    '''.trim();
+
+    // You can use share_plus package for better sharing
+    // For now, we'll show a simple dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Bagikan Produk'),
+        content: SelectableText(shareText),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
   }
 
-  // New method for direct checkout navigation
-  void _buyNowDirectCheckout(BuildContext context) {
-    // Create product copy with quantity
-    Map<String, dynamic> productWithQuantity = Map.from(widget.product);
-    productWithQuantity['purchasedQuantity'] = selectedQuantity;
-    
-    // Navigate directly to checkout page
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CheckoutPage(
-          selectedProducts: [productWithQuantity],
-          onCheckoutSuccess: (purchasedProducts) {
-            // Handle success - navigate back to the appropriate page
-            Navigator.of(context).popUntil((route) => route.isFirst);
-            
-            // Show success message
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Pembelian berhasil!'),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 2),
-              ),
-            );
-          },
-        ),
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }

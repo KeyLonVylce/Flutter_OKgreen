@@ -11,6 +11,9 @@ class ProductCard extends StatelessWidget {
   final Color? textColor;
   final bool isSelected;
   final bool isInSelectionMode;
+  final String? image; // Single image URL
+  final List<String>? images; // Multiple images URLs
+  final VoidCallback? onImageTap; // Callback when image is tapped
 
   const ProductCard({
     super.key,
@@ -22,14 +25,21 @@ class ProductCard extends StatelessWidget {
     this.textColor,
     this.isSelected = false,
     this.isInSelectionMode = false,
+    this.image,
+    this.images,
+    this.onImageTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Determine card background color - NO TRANSPARENCY
+    // Use images list if available, otherwise use single image
+    final imageList = images ?? (image != null ? [image!] : <String>[]);
+    final hasImages = imageList.isNotEmpty;
+
+    // Determine card background color
     Color cardBackground;
     if (isSelected) {
-      cardBackground = Colors.blue[50]!; // Light blue instead of transparent green
+      cardBackground = Colors.blue[50]!;
     } else {
       cardBackground = backgroundColor ?? AppColors.white;
     }
@@ -39,8 +49,8 @@ class ProductCard extends StatelessWidget {
         color: cardBackground,
         borderRadius: BorderRadius.circular(16),
         border: isSelected 
-            ? Border.all(color: Colors.blue[600]!, width: 2) // Blue border instead of primary
-            : null,
+            ? Border.all(color: Colors.blue[600]!, width: 2)
+            : Border.all(color: Colors.grey[200]!, width: 1),
         boxShadow: [
           BoxShadow(
             color: isSelected 
@@ -54,47 +64,52 @@ class ProductCard extends StatelessWidget {
       child: Stack(
         children: [
           // Main card content
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Product name area (replacing image placeholder)
-                Expanded(
-                  flex: 3,
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      // Use solid colors instead of transparency
-                      color: isSelected 
-                          ? Colors.blue[100]! // Solid light blue
-                          : Colors.grey[100]!,
-                      borderRadius: BorderRadius.circular(8),
-                      border: isSelected 
-                          ? Border.all(color: Colors.blue[300]!) // Solid blue border
-                          : null,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      productName ?? "No Image",
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.price.copyWith(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: isSelected 
-                            ? Colors.blue[800]! // Solid blue text
-                            : (textColor ?? Colors.grey[700]),
-                      ),
-                    ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Image/Product name area
+              Expanded(
+                flex: 3,
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    color: Colors.grey[100],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    child: hasImages
+                        ? _buildImageDisplay(imageList)
+                        : _buildPlaceholderImage(),
                   ),
                 ),
-                const SizedBox(height: 8),
-                // Product description and stock
-                Expanded(
-                  flex: 2,
+              ),
+              
+              // Product info section
+              Expanded(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Product name
+                      Text(
+                        productName ?? "Produk",
+                        style: AppTextStyles.price.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected 
+                              ? Colors.blue[800]!
+                              : (textColor ?? Colors.black87),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      
+                      const SizedBox(height: 4),
+                      
+                      // Product description
                       Expanded(
                         child: Text(
                           description,
@@ -109,59 +124,56 @@ class ProductCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      // Stock info
-                      Text(
-                        'Stok: $stock',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: stock > 0 ? Colors.green[600] : Colors.red[600],
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      // Product price
-                      Text(
-                        price,
-                        style: AppTextStyles.price.copyWith(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isSelected 
-                              ? Colors.blue[800]! // Solid blue instead of primary
-                              : Colors.black,
-                        ),
+                      
+                      const SizedBox(height: 8),
+                      
+                      // Price and stock row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Product price
+                          Expanded(
+                            child: Text(
+                              price,
+                              style: AppTextStyles.price.copyWith(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected 
+                                    ? Colors.blue[800]!
+                                    : AppColors.primary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          
+                          // Stock badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: stock > 0 
+                                  ? Colors.green[50] 
+                                  : Colors.red[50],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Stok: $stock',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: stock > 0 
+                                    ? Colors.green[700] 
+                                    : Colors.red[700],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
-          ),
-          
-          // Corner indicator for stock status
-          Positioned(
-            top: 0,
-            left: 0,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: stock > 0 
-                    ? (isSelected ? Colors.blue[600]! : Colors.blue[500]!) // Solid blue colors
-                    : Colors.red[400]!,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  bottomRight: Radius.circular(20),
-                ),
               ),
-              child: Center(
-                child: Icon(
-                  stock > 0 ? Icons.inventory : Icons.remove_shopping_cart,
-                  color: Colors.white,
-                  size: 16,
-                ),
-              ),
-            ),
+            ],
           ),
 
           // Selection indicator (checkmark)
@@ -173,7 +185,7 @@ class ProductCard extends StatelessWidget {
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: Colors.blue[600]!, // Solid blue instead of primary
+                  color: Colors.blue[600]!,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -212,12 +224,12 @@ class ProductCard extends StatelessWidget {
               ),
             ),
           
-          // Out of stock overlay - SOLID WHITE instead of transparent
+          // Out of stock overlay
           if (stock <= 0)
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white, // Solid white instead of transparent
+                  color: Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Center(
@@ -239,6 +251,152 @@ class ProductCard extends StatelessWidget {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageDisplay(List<String> imageList) {
+    if (imageList.length == 1) {
+      // Single image
+      return GestureDetector(
+        onTap: onImageTap,
+        child: Image.network(
+          imageList.first,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return _buildLoadingIndicator();
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return _buildErrorImage();
+          },
+        ),
+      );
+    } else {
+      // Multiple images - show first image with indicator
+      return GestureDetector(
+        onTap: onImageTap,
+        child: Stack(
+          children: [
+            Image.network(
+              imageList.first,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return _buildLoadingIndicator();
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return _buildErrorImage();
+              },
+            ),
+            // Multiple images indicator
+            Positioned(
+              bottom: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.photo_library,
+                      color: Colors.white,
+                      size: 12,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${imageList.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Widget _buildPlaceholderImage() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.recycling,
+            size: 40,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            productName ?? 'No Image',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: Colors.grey[100],
+      child: Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+          strokeWidth: 2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorImage() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: Colors.grey[100],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.broken_image,
+            size: 40,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Failed to load',
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );
