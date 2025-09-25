@@ -221,14 +221,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   _buildDivider(),
                   _buildMenuItem(
-                    icon: SettingIcons.points,
-                    title: 'Tukarkan Point',
-                    onTap: () {
-                      // Handle tap
-                    },
-                  ),
-                  _buildDivider(),
-                  _buildMenuItem(
                     icon: SettingIcons.contact,
                     title: 'Hubungi Kami',
                     onTap: () {
@@ -238,14 +230,6 @@ class _SettingsPageState extends State<SettingsPage> {
                           builder: (context) => const HubungiKamiPage(),
                         ),
                       );
-                    },
-                  ),
-                  _buildDivider(),
-                  _buildMenuItem(
-                    icon: SettingIcons.history,
-                    title: 'Riwayat',
-                    onTap: () {
-                      // Handle tap
                     },
                   ),
                   _buildDivider(),

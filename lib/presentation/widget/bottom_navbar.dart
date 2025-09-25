@@ -23,19 +23,25 @@ class _BottomNavbarState extends State<BottomNavbar> {
       index: 0,
       inactiveIcon: Icons.home_outlined,
       activeIcon: Icons.home_rounded,
-      label: 'Home',
+      label: 'Beranda',
     ),
     NavItem(
       index: 1,
-      inactiveIcon: Icons.sell_outlined,
-      activeIcon: Icons.sell_rounded,
-      label: 'Jual Barang',
+      inactiveIcon: Icons.shopping_bag_outlined,
+      activeIcon: Icons.shopping_bag,
+      label: 'Produk',
     ),
     NavItem(
       index: 2,
-      inactiveIcon: Icons.shopping_bag_outlined,
-      activeIcon: Icons.shopping_bag_rounded,
-      label: 'Beli Barang',
+      inactiveIcon: Icons.stars_outlined,
+      activeIcon: Icons.stars_rounded,
+      label: 'Poin',
+    ),
+    NavItem(
+      index: 3,
+      inactiveIcon: Icons.history_outlined,
+      activeIcon: Icons.history_rounded,
+      label: 'Riwayat',
     ),
   ];
 
