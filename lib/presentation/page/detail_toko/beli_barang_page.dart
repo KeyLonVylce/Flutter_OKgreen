@@ -76,8 +76,8 @@ class _BeliBarangPageState extends State<BeliBarangPage> with TickerProviderStat
       ]);
 
       setState(() {
-        products = results[0] as List<Map<String, dynamic>>;
-        categories = results[1] as List<Map<String, dynamic>>;
+        products = results[0];
+        categories = results[1];
         filteredProducts = List.from(products);
         isLoading = false;
       });

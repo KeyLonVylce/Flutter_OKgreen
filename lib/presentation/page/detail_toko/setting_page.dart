@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({Key? key}) : super(key: key);
+  const SettingsPage({super.key});
 
   @override
   _SettingsPageState createState() => _SettingsPageState();
