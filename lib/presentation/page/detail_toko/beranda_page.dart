@@ -5,35 +5,44 @@ import 'package:okgreen/presentation/page/detail_toko/beli_barang_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/jual_barang_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/product_detail_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/setting_page.dart';
+import 'package:okgreen/presentation/page/detail_toko/notification_page.dart'; // Tambahan
 import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/product_card.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
 import 'package:okgreen/service/auth_service.dart';
 import 'package:okgreen/service/product_service.dart';
+import 'package:okgreen/service/notification_service.dart'; // Tambahan
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 class BerandaPage extends StatefulWidget {
+  const BerandaPage({super.key});
+
   @override
   _BerandaPageState createState() => _BerandaPageState();
 }
 
 class _BerandaPageState extends State<BerandaPage> {
   int _currentIndex = 0;
-  PageController _pageController = PageController();
+  final PageController _pageController = PageController();
   int _currentCarouselIndex = 0;
   String _userName = 'Pengguna';
   final AuthService _authService = AuthService();
+  final NotificationService _notificationService = NotificationService(); // Tambahan
   
   // Product data
   List<Map<String, dynamic>> products = [];
   bool isLoadingProducts = true;
+  
+  // Tambahan untuk notification
+  int _unreadNotificationCount = 0;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
     _loadProducts();
+    _loadNotificationCount(); // Tambahan
   }
 
   // Load user data from SharedPreferences
@@ -48,11 +57,28 @@ class _BerandaPageState extends State<BerandaPage> {
           _userName = userData['name'] ?? userData['user']?['name'] ?? 'Pengguna';
         });
       }
+      
+      // Refresh notification count juga
+      await _loadNotificationCount();
     } catch (e) {
       print('Error loading user data: $e');
       setState(() {
         _userName = 'Pengguna';
       });
+    }
+  }
+
+  // Tambahan method untuk load notification count
+  Future<void> _loadNotificationCount() async {
+    try {
+      final count = await _notificationService.getUnreadCount();
+      if (mounted) {
+        setState(() {
+          _unreadNotificationCount = count;
+        });
+      }
+    } catch (e) {
+      print('Error loading notification count: $e');
     }
   }
 
@@ -117,8 +143,15 @@ class _BerandaPageState extends State<BerandaPage> {
     }
   }
 
+  // Update method notification tap
   void _onNotificationTap() {
-    print('Notification tapped');
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => NotificationPage()),
+    ).then((_) {
+      // Refresh notification count setelah kembali dari halaman notifikasi
+      _loadNotificationCount();
+    });
   }
 
   void _onSettingsTap() {
@@ -221,9 +254,39 @@ class _BerandaPageState extends State<BerandaPage> {
                       ),
                       Row(
                         children: [
-                          HeaderIcon(
-                            icon: HeaderIcons.notification,
-                            onTap: _onNotificationTap,
+                          // Update bagian notification dengan badge
+                          Stack(
+                            children: [
+                              HeaderIcon(
+                                icon: HeaderIcons.notification,
+                                onTap: _onNotificationTap,
+                              ),
+                              if (_unreadNotificationCount > 0)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    padding: EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    constraints: BoxConstraints(
+                                      minWidth: 20,
+                                      minHeight: 20,
+                                    ),
+                                    child: Text(
+                                      _unreadNotificationCount > 99 ? '99+' : _unreadNotificationCount.toString(),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                           const SizedBox(width: 12),
                           HeaderIcon(
@@ -245,7 +308,7 @@ class _BerandaPageState extends State<BerandaPage> {
                         children: [
                           const SizedBox(height: 20),
 
-                          Container(
+                          SizedBox(
                             height: 160,
                             child: Stack(
                               children: [

@@ -9,6 +9,8 @@ import 'package:okgreen/service/auth_service.dart';
 import 'register.dart';
 
 class WaveLoginScreen extends StatefulWidget {
+  const WaveLoginScreen({super.key});
+
   @override
   _WaveLoginScreenState createState() => _WaveLoginScreenState();
 }

@@ -7,11 +7,11 @@ class EcoProductCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const EcoProductCard({
-    Key? key,
+    super.key,
     this.title,
     this.description,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +120,7 @@ class EcoProductCard extends StatelessWidget {
 
 // Alternative version with shimmer effect
 class EcoProductCardShimmer extends StatefulWidget {
-  const EcoProductCardShimmer({Key? key}) : super(key: key);
+  const EcoProductCardShimmer({super.key});
 
   @override
   _EcoProductCardShimmerState createState() => _EcoProductCardShimmerState();

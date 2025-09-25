@@ -6,10 +6,10 @@ class ProfilPage extends StatefulWidget {
   final Map<String, dynamic>? userData;
 
   const ProfilPage({
-    Key? key, 
+    super.key, 
     required this.userId,
     this.userData,
-  }) : super(key: key);
+  });
 
   @override
   _ProfilPageState createState() => _ProfilPageState();

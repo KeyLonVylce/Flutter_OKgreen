@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class HubungiKamiPage extends StatefulWidget {
-  const HubungiKamiPage({Key? key}) : super(key: key);
+  const HubungiKamiPage({super.key});
 
   @override
   _HubungiKamiPageState createState() => _HubungiKamiPageState();
