@@ -1,9 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:okgreen/core/constants/app_colors.dart';
 import 'package:okgreen/presentation/page/detail_toko/beli_barang_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/beranda_page.dart';
 import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
+import 'package:okgreen/service/api_client.dart'; // Import ApiClient yang sudah ada
 
 class JualBarangPage extends StatefulWidget {
   const JualBarangPage({super.key});
@@ -13,17 +17,15 @@ class JualBarangPage extends StatefulWidget {
 }
 
 class _JualBarangPageState extends State<JualBarangPage> {
-  int currentIndex = 1; // Jual Barang tab
+  int currentIndex = 1;
   
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   
-  // Backend fields
   String? selectedCategoryId;
   String? selectedSellTypeId;
   String selectedSellMethod = 'drop_point';
   
-  // Data untuk dropdown
   List<WasteCategory> categories = [];
   List<SellWasteType> sellTypes = [];
   
@@ -33,8 +35,13 @@ class _JualBarangPageState extends State<JualBarangPage> {
     'pickup': 'Pickup Service'
   };
   
-  // Untuk foto
-  List<String> selectedPhotos = [];
+  // UBAH DARI List<String> KE List<File>
+  List<File> selectedPhotos = [];
+  final ImagePicker _picker = ImagePicker();
+  bool isSubmitting = false;
+
+  // GUNAKAN ApiClient yang sudah ada
+  final ApiClient _apiClient = ApiClient();
 
   @override
   void initState() {
@@ -42,58 +49,92 @@ class _JualBarangPageState extends State<JualBarangPage> {
     _loadCategories();
   }
 
-  // Load waste categories from backend
+  // Load categories DENGAN ApiClient existing
   void _loadCategories() async {
-    // TODO: Implement API call to get categories
-    // Example implementation:
     try {
-      // final response = await ApiService.getWasteCategories();
-      // setState(() {
-      //   categories = response.data;
-      // });
-      
-      // Mock data for now - replace with actual API call
+      final response = await _apiClient.getWasteCategories();
+      setState(() {
+        categories = response.map((e) => WasteCategory.fromJson(e)).toList();
+      });
+    } catch (e) {
+      // Fallback ke mock data
       setState(() {
         categories = [
           WasteCategory(id: '1', categoryName: 'Plastik'),
           WasteCategory(id: '2', categoryName: 'Kertas'),
           WasteCategory(id: '3', categoryName: 'Logam'),
-          WasteCategory(id: '4', categoryName: 'Kaca'),
-          WasteCategory(id: '5', categoryName: 'Organik'),
         ];
       });
-    } catch (e) {
-      // Handle error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal memuat kategori: $e')),
-      );
     }
   }
 
-  // Load sell waste types based on category
+  // Load sell types DENGAN ApiClient existing
   void _loadSellTypes(String categoryId) async {
-    // TODO: Implement API call to get sell types by category
     try {
-      // final response = await ApiService.getSellTypes(categoryId);
-      // setState(() {
-      //   sellTypes = response.data;
-      //   selectedSellTypeId = null;
-      // });
-      
-      // Mock data for now - replace with actual API call
+      final response = await _apiClient.getSellWasteTypes(categoryId);
       setState(() {
-        sellTypes = [
-          SellWasteType(id: '1', typeName: 'Botol Plastik', pointsPerKg: 2000),
-          SellWasteType(id: '2', typeName: 'Kantong Plastik', pointsPerKg: 1500),
-          SellWasteType(id: '3', typeName: 'Kemasan Makanan', pointsPerKg: 1800),
-        ];
+        sellTypes = response.map((e) => SellWasteType.fromJson(e)).toList();
         selectedSellTypeId = null;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal memuat jenis sampah: $e')),
-      );
+      setState(() {
+        sellTypes = [
+          SellWasteType(id: '1', typeName: 'Botol Plastik', pointsPerKg: 2000),
+        ];
+        selectedSellTypeId = null;
+      });
     }
+  }
+
+  // UPLOAD FOTO - implementasi sederhana
+  Future<void> _pickPhoto() async {
+    if (selectedPhotos.length >= 5) {
+      _showError('Maksimal 5 foto');
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Pilih Foto'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.camera_alt),
+              title: Text('Kamera'),
+              onTap: () {
+                Navigator.pop(context);
+                _getPhoto(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.photo_library),
+              title: Text('Galeri'),
+              onTap: () {
+                Navigator.pop(context);
+                _getPhoto(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _getPhoto(ImageSource source) async {
+    final XFile? photo = await _picker.pickImage(source: source);
+    if (photo != null) {
+      setState(() {
+        selectedPhotos.add(File(photo.path));
+      });
+    }
+  }
+
+  void _removePhoto(int index) {
+    setState(() {
+      selectedPhotos.removeAt(index);
+    });
   }
 
   void _onTabTapped(int index) {
@@ -112,62 +153,51 @@ class _JualBarangPageState extends State<JualBarangPage> {
     }
   }
 
+  // SUBMIT dengan ApiClient existing
   void _submitSellRequest() async {
-    // Validation
-    if (selectedCategoryId == null) {
-      _showError('Pilih kategori sampah');
+    // Validasi
+    if (selectedPhotos.isEmpty) {
+      _showError('Minimal 1 foto harus diupload');
       return;
     }
-    if (selectedSellTypeId == null) {
-      _showError('Pilih jenis sampah');
-      return;
-    }
-    if (_weightController.text.isEmpty) {
-      _showError('Masukkan berat sampah');
+    if (selectedCategoryId == null || selectedSellTypeId == null || _weightController.text.isEmpty) {
+      _showError('Lengkapi semua field');
       return;
     }
     
     double? weight = double.tryParse(_weightController.text);
     if (weight == null || weight <= 0) {
-      _showError('Berat sampah harus lebih dari 0');
+      _showError('Berat harus lebih dari 0');
       return;
     }
 
-    // TODO: Implement API call to submit sell request
+    setState(() => isSubmitting = true);
+
     try {
-      // final request = SellWasteRequest(
-      //   wasteCategoryId: selectedCategoryId!,
-      //   sellWasteTypeId: selectedSellTypeId!,
-      //   sellMethod: selectedSellMethod,
-      //   weight: weight,
-      //   description: _descriptionController.text,
-      //   photos: selectedPhotos,
-      // );
-      // 
-      // final response = await ApiService.submitSellRequest(request);
-      
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Permintaan jual sampah berhasil dikirim (pending verifikasi)'),
-          backgroundColor: Colors.green,
-        ),
+      await _apiClient.submitSellRequest(
+        wasteCategoryId: selectedCategoryId!,
+        sellWasteTypeId: selectedSellTypeId!,
+        sellMethod: selectedSellMethod,
+        weight: weight,
+        description: _descriptionController.text,
+        photos: selectedPhotos,
       );
       
-      // Reset form
-      _resetForm();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Berhasil mengirim permintaan jual sampah'), backgroundColor: Colors.green),
+      );
       
+      _resetForm();
     } catch (e) {
-      _showError('Gagal mengirim permintaan jual sampah: $e');
+      _showError('Gagal mengirim: $e');
+    } finally {
+      setState(() => isSubmitting = false);
     }
   }
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -195,10 +225,7 @@ class _JualBarangPageState extends State<JualBarangPage> {
               height: 280,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary,
-                    AppColors.primary.withOpacity(0.8),
-                  ],
+                  colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -208,7 +235,6 @@ class _JualBarangPageState extends State<JualBarangPage> {
           SafeArea(
             child: Column(
               children: [
-                // Header
                 Padding(
                   padding: const EdgeInsets.all(20),
                   child: Row(
@@ -217,34 +243,14 @@ class _JualBarangPageState extends State<JualBarangPage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Jual Sampah',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'Jual sampah dan dapatkan poin',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
-                              fontSize: 16,
-                            ),
-                          ),
+                          const Text('Jual Sampah', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                          Text('Jual sampah dan dapatkan poin', style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 16)),
                         ],
                       ),
                       Container(
                         padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.recycling,
-                          color: Colors.white,
-                          size: 24,
-                        ),
+                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
+                        child: const Icon(Icons.recycling, color: Colors.white, size: 24),
                       ),
                     ],
                   ),
@@ -256,10 +262,7 @@ class _JualBarangPageState extends State<JualBarangPage> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavbar(
-        currentIndex: currentIndex,
-        onTap: _onTabTapped,
-      ),
+      bottomNavigationBar: BottomNavbar(currentIndex: currentIndex, onTap: _onTabTapped),
     );
   }
 
@@ -269,343 +272,170 @@ class _JualBarangPageState extends State<JualBarangPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Photo upload
-          _buildPhotoUpload(),
-          const SizedBox(height: 20),
-          
-          // Category dropdown
-          _buildCategoryDropdown(),
-          const SizedBox(height: 16),
-          
-          // Sell type dropdown (enabled only when category selected)
-          _buildSellTypeDropdown(),
-          const SizedBox(height: 16),
-          
-          // Weight and sell method
-          Row(
-            children: [
-              Expanded(
-                child: _buildFormField(
-                  label: 'Berat (Kg)', 
-                  controller: _weightController, 
-                  hint: '0.0', 
-                  keyboardType: TextInputType.numberWithOptions(decimal: true)
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildSellMethodDropdown(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          
-          // Description
-          _buildFormField(
-            label: 'Deskripsi (Opsional)', 
-            controller: _descriptionController, 
-            hint: 'Deskripsikan kondisi sampah', 
-            maxLines: 4
-          ),
-          const SizedBox(height: 16),
-          
-          // Price estimation
-          if (selectedSellTypeId != null && _weightController.text.isNotEmpty)
-            _buildPriceEstimation(),
-          
-          const SizedBox(height: 30),
-          
-          // Submit button
-          SizedBox(
+          // FOTO UPLOAD SEDERHANA
+          Container(
             width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: _submitSellRequest,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-              ),
-              child: const Text(
-                'Kirim Permintaan Jual', 
-                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)
-              ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey[300]!),
             ),
-          ),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPhotoUpload() {
-    return Container(
-      width: double.infinity,
-      height: 200,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: selectedPhotos.isEmpty
-          ? InkWell(
-              onTap: () {
-                // TODO: Implement photo selection
-                // _selectPhotos();
-              },
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      shape: BoxShape.circle,
+            child: selectedPhotos.isEmpty 
+              ? InkWell(
+                  onTap: _pickPhoto,
+                  child: Container(
+                    height: 200,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.camera_alt, color: AppColors.primary, size: 40),
+                        SizedBox(height: 16),
+                        Text('Tap untuk tambah foto', style: TextStyle(fontSize: 16)),
+                      ],
                     ),
-                    child: Icon(Icons.camera_alt, color: AppColors.primary, size: 40),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Tambah Foto Sampah',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey[700]),
-                  ),
-                  const SizedBox(height: 8),
-                  Text('Tap untuk menambah foto', style: TextStyle(fontSize: 14, color: Colors.grey[500])),
-                ],
-              ),
-            )
-          : GridView.builder(
-              padding: const EdgeInsets.all(8),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-              ),
-              itemCount: selectedPhotos.length + 1,
-              itemBuilder: (context, index) {
-                if (index == selectedPhotos.length) {
-                  return InkWell(
-                    onTap: () {
-                      // TODO: Add more photos
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[300]!),
+                )
+              : Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Foto (${selectedPhotos.length}/5)', style: TextStyle(fontWeight: FontWeight.w600)),
+                          TextButton(onPressed: selectedPhotos.length < 5 ? _pickPhoto : null, child: Text('Tambah')),
+                        ],
                       ),
-                      child: const Icon(Icons.add, color: Colors.grey),
-                    ),
-                  );
-                }
-                return Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.grey[300],
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8),
+                        itemCount: selectedPhotos.length,
+                        itemBuilder: (context, index) {
+                          return Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.file(selectedPhotos[index], fit: BoxFit.cover, width: double.infinity, height: double.infinity),
+                              ),
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: GestureDetector(
+                                  onTap: () => _removePhoto(index),
+                                  child: Container(
+                                    padding: EdgeInsets.all(4),
+                                    decoration: BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                                    child: Icon(Icons.close, color: Colors.white, size: 16),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                  // TODO: Display actual image
-                  child: const Icon(Icons.image, color: Colors.grey),
-                );
-              },
-            ),
-    );
-  }
-
-  Widget _buildCategoryDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Kategori Sampah *', 
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87)
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[300]!),
+                ),
           ),
-          child: DropdownButton<String>(
-            value: selectedCategoryId,
-            isExpanded: true,
-            underline: Container(),
-            hint: const Text('Pilih kategori sampah'),
-            onChanged: (value) {
+          
+          SizedBox(height: 20),
+          
+          // CATEGORY DROPDOWN
+          _buildDropdown(
+            'Kategori Sampah *',
+            selectedCategoryId,
+            categories.map((e) => DropdownMenuItem(value: e.id, child: Text(e.categoryName))).toList(),
+            (value) {
               setState(() {
                 selectedCategoryId = value;
                 selectedSellTypeId = null;
                 sellTypes = [];
               });
-              if (value != null) {
-                _loadSellTypes(value);
-              }
+              if (value != null) _loadSellTypes(value);
             },
-            items: categories.map((WasteCategory category) {
-              return DropdownMenuItem<String>(
-                value: category.id,
-                child: Text(category.categoryName),
-              );
-            }).toList(),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSellTypeDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Jenis Sampah *', 
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87)
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: selectedCategoryId == null ? Colors.grey[100] : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[300]!),
+          
+          SizedBox(height: 16),
+          
+          // SELL TYPE DROPDOWN
+          _buildDropdown(
+            'Jenis Sampah *',
+            selectedSellTypeId,
+            sellTypes.map((e) => DropdownMenuItem(value: e.id, child: Text(e.typeName))).toList(),
+            (value) => setState(() => selectedSellTypeId = value),
+            enabled: selectedCategoryId != null,
           ),
-          child: DropdownButton<String>(
-            value: selectedSellTypeId,
-            isExpanded: true,
-            underline: Container(),
-            hint: Text(
-              selectedCategoryId == null ? 'Pilih kategori terlebih dahulu' : 'Pilih jenis sampah',
-              style: TextStyle(color: selectedCategoryId == null ? Colors.grey : null),
-            ),
-            onChanged: selectedCategoryId == null ? null : (value) {
-              setState(() {
-                selectedSellTypeId = value;
-              });
-            },
-            items: sellTypes.map((SellWasteType type) {
-              return DropdownMenuItem<String>(
-                value: type.id,
-                child: Row(
-                  children: [
-                    Expanded(child: Text(type.typeName)),
-                    Text(
-                      '${type.pointsPerKg} poin/kg',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+          
+          SizedBox(height: 16),
+          
+          // WEIGHT & METHOD
+          Row(
+            children: [
+              Expanded(child: _buildTextField('Berat (Kg)', _weightController, '0.0', TextInputType.numberWithOptions(decimal: true))),
+              SizedBox(width: 16),
+              Expanded(
+                child: _buildDropdown(
+                  'Metode',
+                  selectedSellMethod,
+                  sellMethods.map((e) => DropdownMenuItem(value: e, child: Text(sellMethodLabels[e]!))).toList(),
+                  (value) => setState(() => selectedSellMethod = value!),
                 ),
-              );
-            }).toList(),
+              ),
+            ],
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSellMethodDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Metode Penjualan', 
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87)
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[300]!),
-          ),
-          child: DropdownButton<String>(
-            value: selectedSellMethod,
-            isExpanded: true,
-            underline: Container(),
-            onChanged: (value) {
-              setState(() {
-                selectedSellMethod = value!;
-              });
-            },
-            items: sellMethods.map((String method) {
-              return DropdownMenuItem<String>(
-                value: method,
-                child: Text(sellMethodLabels[method]!),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPriceEstimation() {
-    final selectedType = sellTypes.firstWhere(
-      (type) => type.id == selectedSellTypeId,
-      orElse: () => SellWasteType(id: '', typeName: '', pointsPerKg: 0),
-    );
-    
-    final weight = double.tryParse(_weightController.text) ?? 0;
-    final totalPoints = selectedType.pointsPerKg * weight;
-    
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Estimasi Poin',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
+          
+          SizedBox(height: 16),
+          
+          // DESCRIPTION
+          _buildTextField('Deskripsi', _descriptionController, 'Opsional', null, maxLines: 3),
+          
+          SizedBox(height: 30),
+          
+          // SUBMIT BUTTON
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: isSubmitting ? null : _submitSellRequest,
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25))),
+              child: isSubmitting 
+                ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white)), SizedBox(width: 8), Text('Mengirim...', style: TextStyle(color: Colors.white))])
+                : Text('Kirim Permintaan Jual', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            '${weight.toStringAsFixed(1)} kg × ${selectedType.pointsPerKg} poin/kg = ${totalPoints.toStringAsFixed(0)} poin',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
-          ),
+          
+          SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  Widget _buildFormField({
-    required String label,
-    required TextEditingController controller,
-    required String hint,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-  }) {
+  Widget _buildDropdown(String label, String? value, List<DropdownMenuItem<String>> items, ValueChanged<String?> onChanged, {bool enabled = true}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87)),
-        const SizedBox(height: 8),
+        Text(label, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        SizedBox(height: 8),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(color: enabled ? Colors.white : Colors.grey[100], borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[300]!)),
+          child: DropdownButton<String>(value: value, isExpanded: true, underline: Container(), hint: Text('Pilih $label'), onChanged: enabled ? onChanged : null, items: items),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller, String hint, TextInputType? keyboardType, {int maxLines = 1}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        SizedBox(height: 8),
         TextField(
           controller: controller,
           maxLines: maxLines,
           keyboardType: keyboardType,
-          onChanged: (value) {
-            if (label.contains('Berat') && selectedSellTypeId != null) {
-              setState(() {}); // Refresh untuk update estimasi harga
-            }
-          },
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
@@ -613,7 +443,7 @@ class _JualBarangPageState extends State<JualBarangPage> {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.primary)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         ),
       ],
@@ -621,63 +451,18 @@ class _JualBarangPageState extends State<JualBarangPage> {
   }
 }
 
-// Model classes to match backend
+// MODEL CLASSES
 class WasteCategory {
   final String id;
   final String categoryName;
-
   WasteCategory({required this.id, required this.categoryName});
-
-  factory WasteCategory.fromJson(Map<String, dynamic> json) {
-    return WasteCategory(
-      id: json['id'].toString(),
-      categoryName: json['category_name'],
-    );
-  }
+  factory WasteCategory.fromJson(Map<String, dynamic> json) => WasteCategory(id: json['id'].toString(), categoryName: json['category_name']);
 }
 
 class SellWasteType {
   final String id;
   final String typeName;
   final double pointsPerKg;
-
   SellWasteType({required this.id, required this.typeName, required this.pointsPerKg});
-
-  factory SellWasteType.fromJson(Map<String, dynamic> json) {
-    return SellWasteType(
-      id: json['id'].toString(),
-      typeName: json['type_name'],
-      pointsPerKg: (json['points_per_kg'] ?? 0).toDouble(),
-    );
-  }
-}
-
-// Request model untuk API
-class SellWasteRequest {
-  final String wasteCategoryId;
-  final String sellWasteTypeId;
-  final String sellMethod;
-  final double weight;
-  final String? description;
-  final List<String> photos;
-
-  SellWasteRequest({
-    required this.wasteCategoryId,
-    required this.sellWasteTypeId,
-    required this.sellMethod,
-    required this.weight,
-    this.description,
-    required this.photos,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'waste_category_id': wasteCategoryId,
-      'sell_waste_type_id': sellWasteTypeId,
-      'sell_method': sellMethod,
-      'weight': weight,
-      'description': description,
-      'photo': photos,
-    };
-  }
+  factory SellWasteType.fromJson(Map<String, dynamic> json) => SellWasteType(id: json['id'].toString(), typeName: json['type_name'], pointsPerKg: (json['points_per_kg'] ?? 0).toDouble());
 }

@@ -5,19 +5,49 @@ class ProductService {
   // Base URL API - sesuaikan dengan URL server Anda
   static const String baseUrl = 'http://localhost:8000/api'; // atau IP server Anda
   
-  // Model untuk Product
+  // Model untuk Product dengan image support
   static Map<String, dynamic> _createProductFromWasteType(Map<String, dynamic> data) {
+    // Handle multiple photos from sell_waste_transactions
+    List<String> imageUrls = [];
+    if (data['sell_waste_transactions'] != null) {
+      for (var transaction in data['sell_waste_transactions']) {
+        if (transaction['photo'] != null && transaction['photo'].isNotEmpty) {
+          // Handle photo sebagai JSON array atau string
+          var photos = transaction['photo'];
+          if (photos is String) {
+            try {
+              var photoList = json.decode(photos);
+              if (photoList is List) {
+                imageUrls.addAll(photoList.map((p) => '$baseUrl/storage/$p').toList());
+              }
+            } catch (e) {
+              // Jika bukan JSON, treat sebagai single path
+              imageUrls.add('$baseUrl/storage/$photos');
+            }
+          } else if (photos is List) {
+            imageUrls.addAll(photos.map((p) => '$baseUrl/storage/$p').toList());
+          }
+        }
+      }
+    }
+    
+    // Fallback: check if there's direct image field
+    if (imageUrls.isEmpty && data['image'] != null) {
+      imageUrls.add('$baseUrl/storage/${data['image']}');
+    }
+    
     return {
       'id': data['id'],
       'name': data['type_name'],
-      'price': 'Rp ${_formatPrice(data['price_per_kg'] ?? 5000)}', // Default price jika tidak ada
+      'price': 'Rp ${_formatPrice(data['price_per_kg'] ?? 5000)}',
       'description': data['description'] ?? 'Sampah daur ulang berkualitas',
       'category': data['waste_category']['category_name'] ?? 'Lainnya',
       'condition': 'Baik',
-      'weight': '1 kg', // Default weight
+      'weight': '1 kg',
       'seller': 'EcoWaste Store',
-      'stock': data['stock'] ?? 0, // Dari waste_stock jika ada
-      'image': null, // Bisa ditambahkan nanti
+      'stock': data['stock'] ?? 0,
+      'images': imageUrls, // Multiple images
+      'image': imageUrls.isNotEmpty ? imageUrls.first : null, // Primary image for backward compatibility
       'waste_category_id': data['waste_category_id'],
       'price_per_kg': data['price_per_kg'] ?? 5000,
     };
@@ -33,11 +63,11 @@ class ProductService {
     return price.toString();
   }
   
-  // Fetch semua waste types dengan kategorinya
+  // Fetch semua waste types dengan kategori dan foto dari sell transactions
   static Future<List<Map<String, dynamic>>> getAllProducts() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/waste-types'),
+        Uri.parse('$baseUrl/waste-types?include_photos=true'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -96,7 +126,7 @@ class ProductService {
   static Future<List<Map<String, dynamic>>> getProductsByCategory(int categoryId) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/waste-types?category_id=$categoryId'),
+        Uri.parse('$baseUrl/waste-types?category_id=$categoryId&include_photos=true'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -129,7 +159,7 @@ class ProductService {
   static Future<List<Map<String, dynamic>>> searchProducts(String query) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/waste-types?search=${Uri.encodeComponent(query)}'),
+        Uri.parse('$baseUrl/waste-types?search=${Uri.encodeComponent(query)}&include_photos=true'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -194,6 +224,79 @@ class ProductService {
     }
   }
   
+  // Upload foto untuk sell waste transaction
+  static Future<Map<String, dynamic>?> uploadSellWastePhotos(List<String> photoPaths) async {
+    try {
+      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/sell-waste/upload-photos'));
+      
+      request.headers.addAll({
+        'Content-Type': 'multipart/form-data',
+        'Accept': 'application/json',
+      });
+      
+      for (int i = 0; i < photoPaths.length; i++) {
+        request.files.add(await http.MultipartFile.fromPath('photos[]', photoPaths[i]));
+      }
+      
+      final response = await request.send();
+      final responseData = await response.stream.bytesToString();
+      
+      if (response.statusCode == 200) {
+        return json.decode(responseData);
+      } else {
+        throw Exception('Failed to upload photos: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error uploading photos: $e');
+      return null;
+    }
+  }
+  
+  // Submit sell waste request dengan foto
+  static Future<Map<String, dynamic>?> submitSellWasteRequest({
+    required int wasteCategoryId,
+    required int sellWasteTypeId,
+    required String sellMethod,
+    required double weight,
+    String? description,
+    List<String> photoPaths = const [],
+  }) async {
+    try {
+      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/sell-waste'));
+      
+      request.headers.addAll({
+        'Content-Type': 'multipart/form-data',
+        'Accept': 'application/json',
+      });
+      
+      // Add form fields
+      request.fields['waste_category_id'] = wasteCategoryId.toString();
+      request.fields['sell_waste_type_id'] = sellWasteTypeId.toString();
+      request.fields['sell_method'] = sellMethod;
+      request.fields['weight'] = weight.toString();
+      if (description != null) {
+        request.fields['description'] = description;
+      }
+      
+      // Add photos
+      for (int i = 0; i < photoPaths.length; i++) {
+        request.files.add(await http.MultipartFile.fromPath('photo[]', photoPaths[i]));
+      }
+      
+      final response = await request.send();
+      final responseData = await response.stream.bytesToString();
+      
+      if (response.statusCode == 201) {
+        return json.decode(responseData);
+      } else {
+        throw Exception('Failed to submit sell request: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error submitting sell request: $e');
+      return null;
+    }
+  }
+  
   // Update stock setelah pembelian
   static Future<bool> updateStock(int wasteTypeId, double weightSold) async {
     try {
@@ -251,7 +354,34 @@ class ProductService {
     }
   }
   
-  // Dummy data sebagai fallback
+  // Get sell waste types by category
+  static Future<List<Map<String, dynamic>>> getSellWasteTypes(int categoryId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/sell-waste-types?category_id=$categoryId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return List<Map<String, dynamic>>.from(data['data'] ?? data);
+      } else {
+        throw Exception('Failed to load sell waste types: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching sell waste types: $e');
+      return [
+        {'id': 1, 'type_name': 'Botol Plastik', 'points_per_kg': 2000},
+        {'id': 2, 'type_name': 'Kantong Plastik', 'points_per_kg': 1500},
+        {'id': 3, 'type_name': 'Kemasan Makanan', 'points_per_kg': 1800},
+      ];
+    }
+  }
+  
+  // Dummy data sebagai fallback dengan sample images
   static List<Map<String, dynamic>> _getDummyProducts() {
     return [
       {
@@ -265,6 +395,7 @@ class ProductService {
         'seller': 'EcoWaste Store',
         'stock': 25,
         'image': null,
+        'images': [],
         'waste_category_id': 1,
         'price_per_kg': 2500,
       },
@@ -279,6 +410,7 @@ class ProductService {
         'seller': 'EcoWaste Store',
         'stock': 18,
         'image': null,
+        'images': [],
         'waste_category_id': 2,
         'price_per_kg': 8000,
       },
@@ -293,6 +425,7 @@ class ProductService {
         'seller': 'EcoWaste Store',
         'stock': 12,
         'image': null,
+        'images': [],
         'waste_category_id': 3,
         'price_per_kg': 5000,
       },
@@ -307,6 +440,7 @@ class ProductService {
         'seller': 'EcoWaste Store',
         'stock': 8,
         'image': null,
+        'images': [],
         'waste_category_id': 5,
         'price_per_kg': 15000,
       },
