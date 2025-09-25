@@ -8,13 +8,13 @@ class AppIcon extends StatelessWidget {
   final double? borderRadius;
 
   const AppIcon({
-    Key? key,
+    super.key,
     required this.icon,
     this.size = 24.0,
     this.color,
     this.backgroundColor,
     this.borderRadius,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -42,13 +42,13 @@ class HeaderIcon extends StatelessWidget {
   final bool isProfileIcon;
 
   const HeaderIcon({
-    Key? key,
+    super.key,
     required this.icon,
     this.onTap,
     this.color = Colors.white,
     this.size = 24.0,
     this.isProfileIcon = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

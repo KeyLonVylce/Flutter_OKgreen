@@ -5,35 +5,49 @@ import 'package:okgreen/presentation/page/detail_toko/beli_barang_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/jual_barang_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/product_detail_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/setting_page.dart';
+import 'package:okgreen/presentation/page/detail_toko/notification_page.dart';
 import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/product_card.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
 import 'package:okgreen/service/auth_service.dart';
 import 'package:okgreen/service/product_service.dart';
+import 'package:okgreen/service/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 class BerandaPage extends StatefulWidget {
+  const BerandaPage({super.key});
+
   @override
   _BerandaPageState createState() => _BerandaPageState();
 }
 
 class _BerandaPageState extends State<BerandaPage> {
   int _currentIndex = 0;
-  PageController _pageController = PageController();
+  final PageController _pageController = PageController();
   int _currentCarouselIndex = 0;
   String _userName = 'Pengguna';
   final AuthService _authService = AuthService();
+  final NotificationService _notificationService = NotificationService();
   
   // Product data
   List<Map<String, dynamic>> products = [];
   bool isLoadingProducts = true;
+  
+  // User points data
+  int _userPoints = 0;
+  bool isLoadingPoints = true;
+  
+  // Notification
+  int _unreadNotificationCount = 0;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
     _loadProducts();
+    _loadNotificationCount();
+    _loadUserPoints(); // Load user points
   }
 
   // Load user data from SharedPreferences
@@ -48,6 +62,9 @@ class _BerandaPageState extends State<BerandaPage> {
           _userName = userData['name'] ?? userData['user']?['name'] ?? 'Pengguna';
         });
       }
+      
+      // Refresh notification count juga
+      await _loadNotificationCount();
     } catch (e) {
       print('Error loading user data: $e');
       setState(() {
@@ -56,7 +73,45 @@ class _BerandaPageState extends State<BerandaPage> {
     }
   }
 
-  // Load products from service - same as BeliBarangPage
+  // Load user points (placeholder for future API call)
+  Future<void> _loadUserPoints() async {
+    setState(() {
+      isLoadingPoints = true;
+    });
+
+    try {
+      // TODO: Implement API call to get user points
+      // For now, we'll use a placeholder value
+      await Future.delayed(const Duration(seconds: 1)); // Simulate API call
+      
+      setState(() {
+        _userPoints = 0; // Placeholder - will be replaced with API call
+        isLoadingPoints = false;
+      });
+    } catch (e) {
+      print('Error loading user points: $e');
+      setState(() {
+        _userPoints = 0;
+        isLoadingPoints = false;
+      });
+    }
+  }
+
+  // Load notification count
+  Future<void> _loadNotificationCount() async {
+    try {
+      final count = await _notificationService.getUnreadCount();
+      if (mounted) {
+        setState(() {
+          _unreadNotificationCount = count;
+        });
+      }
+    } catch (e) {
+      print('Error loading notification count: $e');
+    }
+  }
+
+  // Load products from service
   Future<void> _loadProducts() async {
     setState(() {
       isLoadingProducts = true;
@@ -77,22 +132,24 @@ class _BerandaPageState extends State<BerandaPage> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Gagal memuat data produk'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
+            duration: Duration(seconds: 3),
           ),
         );
       }
     }
   }
 
-  // Get 4 random products
-  List<Map<String, dynamic>> _getRandomProducts() {
-    if (products.isEmpty) return [];
-    List<Map<String, dynamic>> shuffledProducts = List.from(products);
-    shuffledProducts.shuffle();
-    return shuffledProducts.take(4).toList();
+  // Refresh all data
+  Future<void> _refreshData() async {
+    await Future.wait([
+      _loadUserData(),
+      _loadProducts(),
+      _loadNotificationCount(),
+      _loadUserPoints(),
+    ]);
   }
 
   void _onNavTap(int index) {
@@ -118,7 +175,12 @@ class _BerandaPageState extends State<BerandaPage> {
   }
 
   void _onNotificationTap() {
-    print('Notification tapped');
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => NotificationPage()),
+    ).then((_) {
+      _loadNotificationCount();
+    });
   }
 
   void _onSettingsTap() {
@@ -177,228 +239,364 @@ class _BerandaPageState extends State<BerandaPage> {
     );
   }
 
+  Widget _buildPointsCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary,
+            AppColors.primary.withOpacity(0.8),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.account_balance_wallet,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Poin Kamu',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          isLoadingPoints
+              ? const Row(
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      'Memuat...',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      _userPoints.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        'poin',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+          const SizedBox(height: 12),
+          Text(
+            'Jual sampah untuk mendapatkan lebih banyak poin!',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          ClipPath(
-            clipper: TopWaveClipper(),
-            child: Container(
-              height: 250,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.primary,
-                    AppColors.primary.withOpacity(0.8),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Hello, $_userName',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          HeaderIcon(
-                            icon: HeaderIcons.notification,
-                            onTap: _onNotificationTap,
-                          ),
-                          const SizedBox(width: 12),
-                          HeaderIcon(
-                            icon: HeaderIcons.profile,
-                            onTap: _onSettingsTap,
-                            isProfileIcon: true,
-                          ),
-                        ],
-                      ),
+      body: RefreshIndicator(
+        onRefresh: _refreshData,
+        child: Stack(
+          children: [
+            ClipPath(
+              clipper: TopWaveClipper(),
+              child: Container(
+                height: 250,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.primary,
+                      AppColors.primary.withOpacity(0.8),
                     ],
                   ),
                 ),
-
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 20),
-
-                          Container(
-                            height: 160,
-                            child: Stack(
+              ),
+            ),
+            SafeArea(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Hello, $_userName',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Stack(
                               children: [
-                                PageView(
-                                  controller: _pageController,
-                                  onPageChanged: (index) {
-                                    setState(() {
-                                      _currentCarouselIndex = index;
-                                    });
-                                  },
-                                  children: [
-                                    _buildPlaceholderCard(),
-                                    _buildPlaceholderCard(),
-                                    _buildPlaceholderCard(),
-                                  ],
+                                HeaderIcon(
+                                  icon: HeaderIcons.notification,
+                                  onTap: _onNotificationTap,
                                 ),
-                                Positioned(
-                                  bottom: 12,
-                                  left: 0,
-                                  right: 0,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: List.generate(3, (index) {
-                                      return AnimatedContainer(
-                                        duration: Duration(milliseconds: 300),
-                                        margin: EdgeInsets.symmetric(horizontal: 4),
-                                        width: _currentCarouselIndex == index ? 24 : 8,
-                                        height: 8,
-                                        decoration: BoxDecoration(
-                                          color: _currentCarouselIndex == index
-                                              ? AppColors.primary
-                                              : AppColors.primary.withOpacity(0.3),
-                                          borderRadius: BorderRadius.circular(4),
+                                if (_unreadNotificationCount > 0)
+                                  Positioned(
+                                    right: 0,
+                                    top: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 20,
+                                        minHeight: 20,
+                                      ),
+                                      child: Text(
+                                        _unreadNotificationCount > 99 ? '99+' : _unreadNotificationCount.toString(),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                      );
-                                    }),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(width: 12),
+                            HeaderIcon(
+                              icon: HeaderIcons.profile,
+                              onTap: _onSettingsTap,
+                              isProfileIcon: true,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 20),
+
+                            // Carousel
+                            SizedBox(
+                              height: 160,
+                              child: Stack(
+                                children: [
+                                  PageView(
+                                    controller: _pageController,
+                                    onPageChanged: (index) {
+                                      setState(() {
+                                        _currentCarouselIndex = index;
+                                      });
+                                    },
+                                    children: [
+                                      _buildPlaceholderCard(),
+                                      _buildPlaceholderCard(),
+                                      _buildPlaceholderCard(),
+                                    ],
+                                  ),
+                                  Positioned(
+                                    bottom: 12,
+                                    left: 0,
+                                    right: 0,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: List.generate(3, (index) {
+                                        return AnimatedContainer(
+                                          duration: const Duration(milliseconds: 300),
+                                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                                          width: _currentCarouselIndex == index ? 24 : 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            color: _currentCarouselIndex == index
+                                                ? AppColors.primary
+                                                : AppColors.primary.withOpacity(0.3),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                        );
+                                      }),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Points Card
+                            _buildPointsCard(),
+
+                            const SizedBox(height: 30),
+
+                            // Section header with "Lihat Semua"
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => BeliBarangPage()),
+                                    );
+                                  },
+                                  child: Text(
+                                    'Lihat Semua',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.primary,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
 
-                          const SizedBox(height: 30),
+                            const SizedBox(height: 16),
 
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => BeliBarangPage()),
-                                  );
-                                },
-                                child: Text(
-                                  'Lihat Semua',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          isLoadingProducts 
-                              ? const Center(child: CircularProgressIndicator())
-                              : GridView.builder(
-                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    crossAxisSpacing: 15,
-                                    mainAxisSpacing: 15,
-                                    childAspectRatio: 0.8,
-                                  ),
-                                  shrinkWrap: true,
-                                  physics: NeverScrollableScrollPhysics(),
-                                  itemCount: products.take(4).length,
-                                  itemBuilder: (context, index) {
-                                    final product = products[index];
-                                    final stock = (product['stock'] ?? 0) is int ? product['stock'] as int : 0;
-                                    final price = product['price']?.toString() ?? '0';
-
-                                    return GestureDetector(
-                                      onTap: () => _onProductTap(product),
-                                      child: Stack(
-                                        children: [
-                                          ProductCard(
-                                            productName: product['name'] ?? 'Produk',
-                                            description: product['description'] ?? '',
-                                            price: price,
-                                            stock: stock,
-                                            textColor: AppColors.primary,
+                            // Products grid
+                            isLoadingProducts 
+                                ? const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(40),
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  )
+                                : products.isEmpty
+                                    ? const Center(
+                                        child: Padding(
+                                          padding: EdgeInsets.all(40),
+                                          child: Column(
+                                            children: [
+                                              Icon(
+                                                Icons.inventory_2_outlined,
+                                                size: 64,
+                                                color: Colors.grey,
+                                              ),
+                                              SizedBox(height: 16),
+                                              Text(
+                                                'Belum ada produk tersedia',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ],
                                           ),
+                                        ),
+                                      )
+                                    : GridView.builder(
+                                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          crossAxisSpacing: 15,
+                                          mainAxisSpacing: 15,
+                                          childAspectRatio: 0.8,
+                                        ),
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        itemCount: products.take(4).length,
+                                        itemBuilder: (context, index) {
+                                          final product = products[index];
+                                          final stock = (product['stock'] ?? 0) is int ? product['stock'] as int : 0;
+                                          final price = product['price']?.toString() ?? '0';
 
-                                          if (stock <= 5 && stock > 0)
-                                            Positioned(
-                                              top: 8,
-                                              left: 8,
-                                              child: Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.orange,
-                                                  borderRadius: BorderRadius.circular(8),
-                                                ),
-                                                child: Text(
-                                                  'Stok $stock',
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 10,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
+                                          return GestureDetector(
+                                            onTap: () => _onProductTap(product),
+                                            child: ProductCard(
+                                              productName: product['name'] ?? 'Produk',
+                                              description: product['description'] ?? '',
+                                              price: price,
+                                              stock: stock,
+                                              textColor: AppColors.primary,
+                                              image: product['image'],
+                                              images: product['images'],
                                             ),
-
-                                          if (stock <= 0)
-                                            Positioned.fill(
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  color: Colors.black.withOpacity(0.6),
-                                                  borderRadius: BorderRadius.circular(16),
-                                                ),
-                                                child: const Center(
-                                                  child: Text(
-                                                    'HABIS',
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontWeight: FontWeight.bold,
-                                                      fontSize: 16,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                        ],
+                                          );
+                                        },
                                       ),
-                                    );
-                                  },
-                                ),
 
-                          const SizedBox(height: 100),
-                        ],
+                            const SizedBox(height: 100),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: BottomNavbar(
         currentIndex: _currentIndex,
