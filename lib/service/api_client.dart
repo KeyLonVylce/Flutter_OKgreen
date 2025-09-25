@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:io';
 
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
@@ -139,5 +140,55 @@ class ApiClient {
   Future<void> logout() async {
     await _clearTokens();
     _initDio();
+  }
+
+  Future<List<Map<String, dynamic>>> getWasteCategories() async {
+    try {
+      final response = await _dio.get('/waste-categories');
+      return List<Map<String, dynamic>>.from(response.data);
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getSellWasteTypes(String categoryId) async {
+    try {
+      final response = await _dio.get('/sell-waste/types/$categoryId');
+      return List<Map<String, dynamic>>.from(response.data);
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  Future<Map<String, dynamic>> submitSellRequest({
+    required String wasteCategoryId,
+    required String sellWasteTypeId,
+    required String sellMethod,
+    required double weight,
+    String? description,
+    required List<File> photos,
+  }) async {
+    try {
+      FormData formData = FormData.fromMap({
+        'waste_category_id': wasteCategoryId,
+        'sell_waste_type_id': sellWasteTypeId,
+        'sell_method': sellMethod,
+        'weight': weight.toString(),
+        'description': description ?? '',
+      });
+
+      for (int i = 0; i < photos.length; i++) {
+        String fileName = photos[i].path.split('/').last;
+        formData.files.add(MapEntry(
+          'photo[]',
+          await MultipartFile.fromFile(photos[i].path, filename: fileName),
+        ));
+      }
+
+      final response = await _dio.post('/sell-waste', data: formData);
+      return response.data;
+    } catch (e) {
+      throw e;
+    }
   }
 }

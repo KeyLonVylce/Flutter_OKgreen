@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Test BerandaPage',
+      title: 'OkGreen',
       theme: ThemeData(
         primarySwatch: Colors.green,
         fontFamily: 'Roboto',
