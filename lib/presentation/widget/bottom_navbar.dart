@@ -17,7 +17,7 @@ class BottomNavbar extends StatefulWidget {
 
 class _BottomNavbarState extends State<BottomNavbar> {
   
-  // Data untuk setiap navigation item
+  // Data untuk setiap navigation item sesuai dengan gambar
   List<NavItem> get navItems => [
     NavItem(
       index: 0,
@@ -27,15 +27,15 @@ class _BottomNavbarState extends State<BottomNavbar> {
     ),
     NavItem(
       index: 1,
-      inactiveIcon: Icons.shopping_bag_outlined,
-      activeIcon: Icons.shopping_bag,
-      label: 'Produk',
+      inactiveIcon: Icons.star_outline,
+      activeIcon: Icons.star,
+      label: 'Poin',
     ),
     NavItem(
       index: 2,
-      inactiveIcon: Icons.stars_outlined,
-      activeIcon: Icons.stars_rounded,
-      label: 'Poin',
+      inactiveIcon: Icons.shopping_bag_outlined,
+      activeIcon: Icons.shopping_bag,
+      label: 'Produk',
     ),
     NavItem(
       index: 3,
@@ -128,39 +128,43 @@ class _BottomNavbarState extends State<BottomNavbar> {
     return Expanded(
       child: GestureDetector(
         onTap: () {
+          print('Navbar tapped: ${item.index}'); // Debug log
           widget.onTap(item.index);
         },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Icon dengan transisi sederhana
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                child: Icon(
-                  isActive ? item.activeIcon : item.inactiveIcon,
-                  color: Colors.white,
-                  size: isActive ? 26 : 22,
+        child: Container(
+          color: Colors.transparent, // Ensures tap area covers the entire container
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icon dengan transisi sederhana
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    isActive ? item.activeIcon : item.inactiveIcon,
+                    color: Colors.white,
+                    size: isActive ? 26 : 22,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              // Label dengan style yang berubah
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 200),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: isActive ? 11 : 10,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                const SizedBox(height: 4),
+                // Label dengan style yang berubah
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 200),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: isActive ? 11 : 10,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                  child: Text(
+                    item.label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                child: Text(
-                  item.label,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
