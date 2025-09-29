@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:okgreen/core/constants/app_colors.dart';
 import 'package:okgreen/core/constants/app_icons.dart';
-import 'package:okgreen/presentation/page/detail_toko/beli_barang_page.dart';
+import 'package:okgreen/presentation/page/detail_toko/jelajahi_barang.dart';
 import 'package:okgreen/presentation/page/detail_toko/jual_barang_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/product_detail_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/setting_page.dart';
@@ -33,6 +34,7 @@ class _BerandaPageState extends State<BerandaPage> {
   // Product data
   List<Map<String, dynamic>> products = [];
   bool isLoadingProducts = true;
+  String _loadingError = '';
   
   // User points data
   int _userPoints = 0;
@@ -41,13 +43,45 @@ class _BerandaPageState extends State<BerandaPage> {
   // Notification
   int _unreadNotificationCount = 0;
 
+  // EcoCard images list
+  final List<String> _ecoCardImages = [
+    'assets/EcoCard1.jpg',
+    'assets/EcoCard2.jpg',
+    'assets/EcoCard3.jpg',
+    'assets/EcoCard4.jpg',
+    'assets/EcoCard5.jpg',
+    'assets/EcoCard6.jpg',
+  ];
+
   @override
   void initState() {
     super.initState();
+    
+    // Test koneksi API saat debug
+    if (kDebugMode) {
+      print('=== INIT BerandaPage ===');
+      _testApiConnection();
+    }
+    
     _loadUserData();
     _loadProducts();
     _loadNotificationCount();
-    _loadUserPoints(); // Load user points
+    _loadUserPoints();
+  }
+
+  // Test API connection
+  Future<void> _testApiConnection() async {
+    try {
+      print('Testing API connection...');
+      final isConnected = await ProductService.testConnection();
+      print('API connection test result: $isConnected');
+      
+      if (isConnected) {
+        await ProductService.debugConnection();
+      }
+    } catch (e) {
+      print('Error testing API connection: $e');
+    }
   }
 
   // Load user data from SharedPreferences
@@ -63,7 +97,6 @@ class _BerandaPageState extends State<BerandaPage> {
         });
       }
       
-      // Refresh notification count juga
       await _loadNotificationCount();
     } catch (e) {
       print('Error loading user data: $e');
@@ -73,19 +106,17 @@ class _BerandaPageState extends State<BerandaPage> {
     }
   }
 
-  // Load user points (placeholder for future API call)
+  // Load user points
   Future<void> _loadUserPoints() async {
     setState(() {
       isLoadingPoints = true;
     });
 
     try {
-      // TODO: Implement API call to get user points
-      // For now, we'll use a placeholder value
-      await Future.delayed(const Duration(seconds: 1)); // Simulate API call
+      await Future.delayed(const Duration(seconds: 1));
       
       setState(() {
-        _userPoints = 0; // Placeholder - will be replaced with API call
+        _userPoints = 0;
         isLoadingPoints = false;
       });
     } catch (e) {
@@ -111,14 +142,27 @@ class _BerandaPageState extends State<BerandaPage> {
     }
   }
 
-  // Load products from service
+  // Load products from database
   Future<void> _loadProducts() async {
     setState(() {
       isLoadingProducts = true;
+      _loadingError = '';
     });
 
     try {
+      if (kDebugMode) {
+        print('Loading products from database...');
+      }
+      
       final productData = await ProductService.getAllProducts();
+      
+      if (kDebugMode) {
+        print('Loaded ${productData.length} products from database');
+        if (productData.isNotEmpty) {
+          print('Sample product: ${productData[0]}');
+        }
+      }
+      
       setState(() {
         products = productData;
         isLoadingProducts = false;
@@ -128,22 +172,21 @@ class _BerandaPageState extends State<BerandaPage> {
       setState(() {
         products = [];
         isLoadingProducts = false;
+        _loadingError = 'Gagal memuat data produk dari server';
       });
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Gagal memuat data produk'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          ),
-        );
+        _showErrorSnackBar('Gagal memuat data produk. Periksa koneksi internet Anda.');
       }
     }
   }
 
   // Refresh all data
   Future<void> _refreshData() async {
+    if (kDebugMode) {
+      print('Refreshing all data...');
+    }
+    
     await Future.wait([
       _loadUserData(),
       _loadProducts(),
@@ -152,6 +195,7 @@ class _BerandaPageState extends State<BerandaPage> {
     ]);
   }
 
+  // Navigation handlers
   void _onNavTap(int index) {
     setState(() {
       _currentIndex = index;
@@ -168,7 +212,7 @@ class _BerandaPageState extends State<BerandaPage> {
       case 2:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => BeliBarangPage()),
+          MaterialPageRoute(builder: (context) => JelajahiProdukPage()),
         );
         break;
     }
@@ -193,7 +237,12 @@ class _BerandaPageState extends State<BerandaPage> {
   }
 
   void _onProductTap(Map<String, dynamic> product) async {
-    final result = await Navigator.push(
+    if (kDebugMode) {
+      print('Product tapped: ${product['name']}');
+      print('Product data: $product');
+    }
+
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ProductDetailPage(
@@ -202,13 +251,30 @@ class _BerandaPageState extends State<BerandaPage> {
         ),
       ),
     );
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => BeliBarangPage()),
-    );
   }
 
-  Widget _buildPlaceholderCard() {
+  // Show error snackbar
+  void _showErrorSnackBar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+          action: SnackBarAction(
+            label: 'Coba Lagi',
+            textColor: Colors.white,
+            onPressed: () {
+              _loadProducts();
+            },
+          ),
+        ),
+      );
+    }
+  }
+
+  // Build EcoCard with images
+  Widget _buildEcoCard(int index) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
@@ -223,22 +289,34 @@ class _BerandaPageState extends State<BerandaPage> {
           ),
         ],
       ),
-      child: Container(
-        width: double.infinity,
-        height: 160,
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Icon(
-          Icons.image,
-          size: 50,
-          color: Colors.grey,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.asset(
+          _ecoCardImages[index % _ecoCardImages.length],
+          width: double.infinity,
+          height: 160,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: double.infinity,
+              height: 160,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.image,
+                size: 50,
+                color: Colors.grey,
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
+  // Build points card
   Widget _buildPointsCard() {
     return Container(
       width: double.infinity,
@@ -350,6 +428,118 @@ class _BerandaPageState extends State<BerandaPage> {
     );
   }
 
+  // Build products section
+  Widget _buildProductsSection() {
+    if (isLoadingProducts) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: Column(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text(
+                'Memuat produk dari database...',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_loadingError.isNotEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(40),
+          child: Column(
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.red,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                _loadingError,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.red,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadProducts,
+                child: const Text('Coba Lagi'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (products.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: Column(
+            children: [
+              Icon(
+                Icons.inventory_2_outlined,
+                size: 64,
+                color: Colors.grey,
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Belum ada produk tersedia',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Produk dari database akan muncul di sini',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 15,
+        mainAxisSpacing: 15,
+        childAspectRatio: 0.8,
+      ),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: products.take(4).length,
+      itemBuilder: (context, index) {
+        final product = products[index];
+        return GestureDetector(
+          onTap: () => _onProductTap(product),
+          child: ProductCard(
+            productName: product['name'] ?? 'Produk',
+            description: product['description'] ?? '',
+            price: product['price'] ?? 'Rp 0',
+            stock: product['stock'] ?? 0,
+            textColor: AppColors.primary,
+            image: product['image'],
+            images: product['images'],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -449,23 +639,22 @@ class _BerandaPageState extends State<BerandaPage> {
                           children: [
                             const SizedBox(height: 20),
 
-                            // Carousel
+                            // Carousel with EcoCard images
                             SizedBox(
                               height: 160,
                               child: Stack(
                                 children: [
-                                  PageView(
+                                  PageView.builder(
                                     controller: _pageController,
+                                    itemCount: _ecoCardImages.length,
                                     onPageChanged: (index) {
                                       setState(() {
                                         _currentCarouselIndex = index;
                                       });
                                     },
-                                    children: [
-                                      _buildPlaceholderCard(),
-                                      _buildPlaceholderCard(),
-                                      _buildPlaceholderCard(),
-                                    ],
+                                    itemBuilder: (context, index) {
+                                      return _buildEcoCard(index);
+                                    },
                                   ),
                                   Positioned(
                                     bottom: 12,
@@ -473,7 +662,7 @@ class _BerandaPageState extends State<BerandaPage> {
                                     right: 0,
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
-                                      children: List.generate(3, (index) {
+                                      children: List.generate(_ecoCardImages.length, (index) {
                                         return AnimatedContainer(
                                           duration: const Duration(milliseconds: 300),
                                           margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -504,11 +693,19 @@ class _BerandaPageState extends State<BerandaPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
+                                const Text(
+                                  'Produk Terbaru',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
                                 GestureDetector(
                                   onTap: () {
                                     Navigator.pushReplacement(
                                       context,
-                                      MaterialPageRoute(builder: (context) => BeliBarangPage()),
+                                      MaterialPageRoute(builder: (context) => JelajahiProdukPage()),
                                     );
                                   },
                                   child: Text(
@@ -525,66 +722,8 @@ class _BerandaPageState extends State<BerandaPage> {
 
                             const SizedBox(height: 16),
 
-                            // Products grid
-                            isLoadingProducts 
-                                ? const Center(
-                                    child: Padding(
-                                      padding: EdgeInsets.all(40),
-                                      child: CircularProgressIndicator(),
-                                    ),
-                                  )
-                                : products.isEmpty
-                                    ? const Center(
-                                        child: Padding(
-                                          padding: EdgeInsets.all(40),
-                                          child: Column(
-                                            children: [
-                                              Icon(
-                                                Icons.inventory_2_outlined,
-                                                size: 64,
-                                                color: Colors.grey,
-                                              ),
-                                              SizedBox(height: 16),
-                                              Text(
-                                                'Belum ada produk tersedia',
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  color: Colors.grey,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      )
-                                    : GridView.builder(
-                                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
-                                          crossAxisSpacing: 15,
-                                          mainAxisSpacing: 15,
-                                          childAspectRatio: 0.8,
-                                        ),
-                                        shrinkWrap: true,
-                                        physics: const NeverScrollableScrollPhysics(),
-                                        itemCount: products.take(4).length,
-                                        itemBuilder: (context, index) {
-                                          final product = products[index];
-                                          final stock = (product['stock'] ?? 0) is int ? product['stock'] as int : 0;
-                                          final price = product['price']?.toString() ?? '0';
-
-                                          return GestureDetector(
-                                            onTap: () => _onProductTap(product),
-                                            child: ProductCard(
-                                              productName: product['name'] ?? 'Produk',
-                                              description: product['description'] ?? '',
-                                              price: price,
-                                              stock: stock,
-                                              textColor: AppColors.primary,
-                                              image: product['image'],
-                                              images: product['images'],
-                                            ),
-                                          );
-                                        },
-                                      ),
+                            // Products from database
+                            _buildProductsSection(),
 
                             const SizedBox(height: 100),
                           ],

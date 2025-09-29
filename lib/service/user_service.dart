@@ -31,9 +31,8 @@ class UserService {
     }
   }
 
-  // Update user profile menggunakan endpoint /me (sesuai dengan routes Laravel)
   Future<ApiResponse<Map<String, dynamic>>> updateProfile({
-    required int userId, // Parameter ini tetap ada untuk kompatibilitas, tapi tidak digunakan
+    required int userId, 
     String? name,
     String? email,
     String? phone,
@@ -46,12 +45,12 @@ class UserService {
       
       if (name != null && name.isNotEmpty) data['name'] = name;
       if (email != null && email.isNotEmpty) data['email'] = email;
-      if (phone != null && phone.isNotEmpty) data['phone'] = phone; // Ubah dari phone_number ke phone
+      if (phone != null && phone.isNotEmpty) data['phone'] = phone;
       if (address != null && address.isNotEmpty) data['address'] = address;
       if (dateOfBirth != null && dateOfBirth.isNotEmpty) data['date_of_birth'] = dateOfBirth;
       if (gender != null && gender.isNotEmpty) data['gender'] = gender;
 
-      print('Sending data to /me: $data'); // Debug log
+      print('Sending data to /me: $data');
       
       // Gunakan endpoint /me untuk user yang sedang login (sesuai routes Laravel)
       final response = await _apiClient.dio.put('/me', data: data);

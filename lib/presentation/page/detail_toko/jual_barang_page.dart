@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:okgreen/core/constants/app_colors.dart';
-import 'package:okgreen/presentation/page/detail_toko/beli_barang_page.dart';
+import 'package:okgreen/presentation/page/detail_toko/jelajahi_barang.dart';
 import 'package:okgreen/presentation/page/detail_toko/beranda_page.dart';
 import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
@@ -107,7 +107,7 @@ class _JualBarangPageState extends State<JualBarangPage> {
       case 1:
         break;
       case 2:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BeliBarangPage()));
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => JelajahiProdukPage()));
         break;
     }
   }
