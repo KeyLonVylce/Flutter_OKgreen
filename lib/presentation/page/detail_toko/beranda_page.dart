@@ -3,10 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:okgreen/core/constants/app_colors.dart';
 import 'package:okgreen/core/constants/app_icons.dart';
 import 'package:okgreen/presentation/page/detail_toko/jelajahi_barang.dart';
-import 'package:okgreen/presentation/page/detail_toko/jual_barang_page.dart';
+import 'package:okgreen/presentation/page/detail_toko/point_history_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/product_detail_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/setting_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/notification_page.dart';
+import 'package:okgreen/presentation/page/detail_toko/riwayat.dart';
 import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/product_card.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
@@ -197,22 +198,33 @@ class _BerandaPageState extends State<BerandaPage> {
 
   // Navigation handlers
   void _onNavTap(int index) {
+    if (kDebugMode) {
+      print('Nav tapped: $index');
+    }
+    
     setState(() {
       _currentIndex = index;
     });
+    
     switch (index) {
-      case 0:
+      case 0: // Beranda (current page)
         break;
-      case 1:
+      case 1: // Jual Barang
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => JualBarangPage()),
+          MaterialPageRoute(builder: (context) => const JualBarangPage()),
         );
         break;
-      case 2:
+      case 2: // Jelajahi Produk
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => JelajahiProdukPage()),
+          MaterialPageRoute(builder: (context) => const JelajahiProdukPage()),
+        );
+        break;
+      case 3: // Riwayat
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const RiwayatPage()),
         );
         break;
     }
@@ -264,9 +276,7 @@ class _BerandaPageState extends State<BerandaPage> {
           action: SnackBarAction(
             label: 'Coba Lagi',
             textColor: Colors.white,
-            onPressed: () {
-              _loadProducts();
-            },
+            onPressed: _loadProducts,
           ),
         ),
       );
@@ -705,7 +715,7 @@ class _BerandaPageState extends State<BerandaPage> {
                                   onTap: () {
                                     Navigator.pushReplacement(
                                       context,
-                                      MaterialPageRoute(builder: (context) => JelajahiProdukPage()),
+                                      MaterialPageRoute(builder: (context) => const JelajahiProdukPage()),
                                     );
                                   },
                                   child: Text(

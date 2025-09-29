@@ -1,7 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:okgreen/core/constants/app_colors.dart';
+import 'package:okgreen/presentation/page/detail_toko/beranda_page.dart';
+import 'package:okgreen/presentation/page/detail_toko/point_history_page.dart';
+import 'package:okgreen/presentation/page/detail_toko/jelajahi_barang.dart';
+import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 
-class RiwayatPage extends StatelessWidget {
+class RiwayatPage extends StatefulWidget {
   const RiwayatPage({super.key});
+
+  @override
+  State<RiwayatPage> createState() => _RiwayatPageState();
+}
+
+class _RiwayatPageState extends State<RiwayatPage> {
+  int _currentIndex = 3; // Riwayat tab
+
+  void _onNavTap(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+    
+    switch (index) {
+      case 0: // Beranda
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const BerandaPage()),
+        );
+        break;
+      case 1: // Jual Barang
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const JualBarangPage()),
+        );
+        break;
+      case 2: // Jelajahi Produk
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const JelajahiProdukPage()),
+        );
+        break;
+      case 3: // Riwayat (current page)
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -10,6 +51,16 @@ class RiwayatPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            // Kembali ke Beranda
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const BerandaPage()),
+            );
+          },
+        ),
         title: const Text(
           'Riwayat',
           style: TextStyle(
@@ -93,9 +144,13 @@ class RiwayatPage extends StatelessWidget {
               status: 'Berhasil',
             ),
             
-            const SizedBox(height: 20),
+            const SizedBox(height: 80), // Extra padding untuk bottom navbar
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavbar(
+        currentIndex: _currentIndex,
+        onTap: _onNavTap,
       ),
     );
   }
@@ -104,10 +159,10 @@ class RiwayatPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: isActive ? Colors.green : Colors.white,
+        color: isActive ? AppColors.primary : Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isActive ? Colors.green : Colors.grey.shade300,
+          color: isActive ? AppColors.primary : Colors.grey.shade300,
           width: 1,
         ),
       ),

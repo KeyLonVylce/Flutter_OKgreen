@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:okgreen/core/constants/app_colors.dart';
 import 'package:okgreen/presentation/page/detail_toko/beranda_page.dart';
-import 'package:okgreen/presentation/page/detail_toko/jual_barang_page.dart';
+import 'package:okgreen/presentation/page/detail_toko/point_history_page.dart';
 import 'package:okgreen/presentation/page/detail_toko/product_detail_page.dart';
 import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
 import 'package:okgreen/presentation/widget/product_card.dart';
 import 'package:okgreen/service/product_service.dart';
+import 'riwayat.dart';
 
 class JelajahiProdukPage extends StatefulWidget {
   const JelajahiProdukPage({super.key});
@@ -269,19 +270,25 @@ class _JelajahiProdukPageState extends State<JelajahiProdukPage> {
     });
     
     switch (index) {
-      case 0:
+      case 0: // Beranda
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => BerandaPage()),
+          MaterialPageRoute(builder: (context) => const BerandaPage()),
         );
         break;
-      case 1:
+      case 1: // Jual Barang
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => JualBarangPage()),
+          MaterialPageRoute(builder: (context) => const JualBarangPage()),
         );
         break;
-      case 2:
+      case 2: // Jelajahi Produk (current page)
+        break;
+      case 3: // Riwayat
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const RiwayatPage()),
+        );
         break;
     }
   }

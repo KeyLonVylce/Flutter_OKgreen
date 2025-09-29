@@ -4,6 +4,7 @@ import 'package:okgreen/presentation/page/detail_toko/jelajahi_barang.dart';
 import 'package:okgreen/presentation/page/detail_toko/beranda_page.dart';
 import 'package:okgreen/presentation/widget/bottom_navbar.dart';
 import 'package:okgreen/presentation/widget/top_wave.dart';
+import 'riwayat.dart';
 
 class JualBarangPage extends StatefulWidget {
   const JualBarangPage({super.key});
@@ -100,14 +101,27 @@ class _JualBarangPageState extends State<JualBarangPage> {
     setState(() {
       currentIndex = index;
     });
+    
     switch (index) {
-      case 0:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BerandaPage()));
+      case 0: // Beranda
+        Navigator.pushReplacement(
+          context, 
+          MaterialPageRoute(builder: (context) => const BerandaPage())
+        );
         break;
-      case 1:
+      case 1: // Jual Barang (current page)
         break;
-      case 2:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => JelajahiProdukPage()));
+      case 2: // Jelajahi Produk
+        Navigator.pushReplacement(
+          context, 
+          MaterialPageRoute(builder: (context) => const JelajahiProdukPage())
+        );
+        break;
+      case 3: // Riwayat
+        Navigator.pushReplacement(
+          context, 
+          MaterialPageRoute(builder: (context) => const RiwayatPage())
+        );
         break;
     }
   }
@@ -289,7 +303,7 @@ class _JualBarangPageState extends State<JualBarangPage> {
                   label: 'Berat (Kg)', 
                   controller: _weightController, 
                   hint: '0.0', 
-                  keyboardType: TextInputType.numberWithOptions(decimal: true)
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true)
                 ),
               ),
               const SizedBox(width: 16),
